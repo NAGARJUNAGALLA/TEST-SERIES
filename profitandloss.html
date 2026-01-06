@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraction Word Problems - Professional Exam Mode</title>
+    
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                enableMenu: false
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        console.log('MathJax is ready');
+                    });
+                }
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+    <style>
+        :root {
+            --primary: #1a365d;
+            --secondary: #2b6cb0;
+            --bg: #f7fafc;
+            --correct: #38a169;
+            --wrong: #e53e3e;
+            --accent: #ed8936;
+        }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        .header { background: var(--primary); color: white; padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; z-index: 1001; }
+        .timer-box { background: rgba(0,0,0,0.2); padding: 8px 20px; border-radius: 8px; border: 2px solid var(--accent); font-family: monospace; font-size: 1.4rem; color: var(--accent); }
+        .menu-toggle { cursor: pointer; font-size: 1.8rem; }
+
+        .main-layout { display: flex; flex: 1; position: relative; overflow: hidden; }
+
+        .quiz-container { flex: 1; padding: 40px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
+
+        #nav-sidebar { width: 300px; background: white; border-left: 1px solid #e2e8f0; padding: 20px; overflow-y: auto; position: absolute; right: -350px; top: 0; bottom: 0; transition: 0.3s; z-index: 1000; box-shadow: -4px 0 15px rgba(0,0,0,0.05); }
+        #nav-sidebar.open { right: 0; }
+        
+        .nav-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        .nav-dot { height: 40px; width: 40px; border: 1px solid #cbd5e0; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 6px; background: white; }
+        .nav-dot.viewed { background: #feb2b2; border-color: #fc8181; }
+        .nav-dot.attempted { background: #9ae6b4 !important; border-color: #68d391; }
+        .nav-dot.active { border: 3px solid var(--secondary); transform: scale(1.1); font-weight: bold; }
+
+        .q-card { background: white; width: 100%; max-width: 850px; padding: 45px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-top: 20px; border-top: 5px solid var(--secondary); }
+        .question-text { font-size: 1.35rem; line-height: 1.8; margin-bottom: 30px; color: #2d3748; }
+        .options-grid { display: grid; gap: 15px; }
+        .opt { padding: 20px 25px; border: 2px solid #edf2f7; border-radius: 10px; cursor: pointer; transition: 0.2s; font-size: 1.15rem; background: #fff; }
+        .opt:hover:not(.locked) { background: #f7fafc; border-color: var(--secondary); }
+        .selected { background: #ebf8ff !important; border-color: var(--secondary) !important; }
+
+        .is-correct { background: #f0fff4 !important; border-color: var(--correct) !important; color: #22543d; font-weight: bold; }
+        .is-wrong { background: #fff5f5 !important; border-color: var(--wrong) !important; color: #822727; }
+        .locked { pointer-events: none; }
+
+        .fixed-controls { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px 0; border-top: 1px solid #e2e8f0; display: flex; justify-content: center; gap: 40px; z-index: 999; }
+        .btn { padding: 12px 40px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1.1rem; background: var(--primary); color: white; min-width: 160px; transition: 0.2s; }
+        .btn:hover { filter: brightness(1.2); }
+        #next-btn { background: var(--secondary); }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div id="exam-status"><b>Mathematics:</b> Fractions Unit Test</div>
+    <div class="timer-box" id="timer">50:00</div>
+    <div class="menu-toggle" onclick="toggleSidebar()">☰</div>
+</div>
+
+<div class="main-layout">
+    <div class="quiz-container">
+        <div id="q-view" class="q-card">
+            <div id="question-body"></div>
+            <div class="options-grid" id="options-body"></div>
+        </div>
+    </div>
+    <div id="nav-sidebar">
+        <h3 style="margin-top:0">Question Map</h3>
+        <div class="nav-grid" id="nav-dots"></div>
+    </div>
+</div>
+
+<div class="fixed-controls" id="control-bar">
+    <button class="btn" id="prev-btn" onclick="move(-1)">← Previous</button>
+    <button class="btn" id="next-btn" onclick="move(1)">Next Question →</button>
+</div>
+
+<script>
+const quizData = [
+    { q: "A man buys a toy for ₹25 and sells it for ₹30. Find his profit percentage.", o: ["10%", "20%", "25%", "5%"], c: 1 },
+    { q: "If the Cost Price (CP) is ₹120 and the Selling Price (SP) is ₹100, what is the loss percentage?", o: ["16.66%", "20%", "15%", "25%"], c: 0 },
+    { q: "By selling a watch for ₹1440, a man loses 10%. At what price should he sell it to gain 10%?", o: ["₹1584", "₹1760", "₹1600", "₹1800"], c: 1 },
+    { q: "The cost price of 10 articles is equal to the selling price of 8 articles. Find the profit percentage.", o: ["20%", "25%", "30%", "15%"], c: 1 },
+    { q: "A shopkeeper sells an item at a profit of 15%. If he had sold it for ₹18 more, he would have gained 18%. Find the Cost Price.", o: ["₹600", "₹500", "₹450", "₹550"], c: 0 },
+    { q: "Find the single discount equivalent to two successive discounts of 20% and 10%.", o: ["30%", "25%", "28%", "22%"], c: 2 },
+    { q: "A vendor buys lemons at 5 for ₹1 and sells them at 3 for ₹1. What is his gain percentage?", o: ["33.33%", "40%", "66.66%", "50%"], c: 2 },
+    { q: "If SP is ₹84 and profit is 20%, find the Cost Price.", o: ["₹70", "₹68", "₹72", "₹75"], c: 0 },
+    { q: "A man sold two fans for ₹1200 each. On one he gained 20% and on the other he lost 20%. His overall loss/gain is:", o: ["No loss, no gain", "4% gain", "4% loss", "1% loss"], c: 2 },
+    { q: "Marked Price of a shirt is ₹500. After a discount of 10%, the SP will be:", o: ["₹450", "₹490", "₹400", "₹440"], c: 0 },
+    { q: "The ratio of CP and SP is 4:5. The profit percentage is:", o: ["20%", "25%", "10%", "30%"], c: 1 },
+    { q: "If $\\frac{1}{3}$ of the selling price is equal to the profit, find the profit percentage on cost price.", o: ["25%", "33.33%", "50%", "20%"], c: 2 },
+    { q: "A dishonest dealer professes to sell his goods at CP but uses a weight of 960g for a kg. Find his gain percent.", o: ["4%", "4.16%", "3.8%", "5%"], c: 1 },
+    { q: "If the loss is $\\frac{1}{4}$ of the selling price, the loss percentage is:", o: ["25%", "20%", "15%", "10%"], c: 1 },
+    { q: "A merchant marks his goods 20% above CP and allows a discount of 10%. His profit percent is:", o: ["10%", "8%", "12%", "6%"], c: 1 },
+    { q: "By selling an article for ₹72, there is a loss of 10%. In order to gain 5%, the selling price should be:", o: ["₹84", "₹80", "₹90", "₹75"], c: 0 },
+    { q: "If SP is doubled, the profit triples. Find the profit percent.", o: ["66.6%", "100%", "120%", "150%"], c: 1 },
+    { q: "A man gains 20% by selling an article for a certain price. If he sells it at double that price, the profit will be:", o: ["40%", "100%", "140%", "120%"], c: 2 },
+    { q: "Find the single discount equivalent to successive discounts of 10%, 20% and 30%.", o: ["60%", "50.4%", "49.6%", "45%"], c: 2 },
+    { q: "A fruit seller buys oranges at 4 for ₹3 and sells at 3 for ₹4. Profit percent is:", o: ["77.7%", "70%", "50%", "45.5%"], c: 0 },
+    { q: "Selling an article at $\\frac{2}{3}$ of the marked price results in a loss of 10%. The profit percent when sold at MP is:", o: ["20%", "30%", "35%", "40%"], c: 2 },
+    { q: "CP of 20 articles is SP of $x$ articles. If profit is 25%, find $x$.", o: ["15", "16", "18", "25"], c: 1 },
+    { q: "A reduction of 20% in the price of sugar enables a man to buy 4kg more for ₹160. Find the reduced price per kg.", o: ["₹8", "₹10", "₹12", "₹7"], c: 0 },
+    { q: "If the profit on an item is $\\frac{2}{5}$ of its selling price, find the profit percentage.", o: ["40%", "60%", "66.66%", "25%"], c: 2 },
+    { q: "Find the cost price of an article which is sold for ₹220 at a loss of 12%.", o: ["₹250", "₹242", "₹260", "₹245"], c: 0 },
+    { q: "If $x$ sells to $y$ at 20% profit and $y$ sells to $z$ at 10% profit, find total profit percent.", o: ["30%", "32%", "35%", "31%"], c: 1 },
+    { q: "The side of a square plot is $\\sqrt{625}$ meters. If it is sold at a profit of 10%, find the SP per meter.", o: ["27.5", "25", "30", "22.5"], c: 0 },
+    { q: "Loss of 20% on CP is what percent loss on SP?", o: ["25%", "15%", "16.6%", "20%"], c: 0 },
+    { q: "A shopkeeper offers 10% discount but still makes 20% profit. If CP is ₹90, find MP.", o: ["₹120", "₹110", "₹100", "₹108"], c: 0 },
+    { q: "By selling 33m of cloth, a man gains the SP of 11m. Gain percent is:", o: ["50%", "33.3%", "25%", "20%"], c: 0 },
+    { q: "If profit is $\\frac{1}{5}$ of CP, then SP is what fraction of CP?", o: ["$\\frac{4}{5}$", "$\\frac{6}{5}$", "$\\frac{1}{6}$", "$\\frac{5}{6}$"], c: 1 },
+    { q: "Profit on an item is 150% of CP. If CP increases by 25% but SP remains same, new profit percent is:", o: ["75%", "100%", "125%", "80%"], c: 1 },
+    { q: "A shopkeeper allows 25% discount on MP and makes 20% profit. If his profit is ₹40, find CP.", o: ["₹200", "₹180", "₹250", "₹150"], c: 0 },
+    { q: "Price of an article is increased by 10% and then decreased by 10%. Net change is:", o: ["0%", "1% increase", "1% decrease", "2% decrease"], c: 2 },
+    { q: "Ratio of SP of two items is 1:1. One sold at 10% profit and other at 10% loss. Net loss is:", o: ["1%", "0.5%", "2%", "No loss"], c: 0 },
+    { q: "A trader sells $\\frac{1}{4}$ of goods at 20% profit and the rest at CP. Total gain percent is:", o: ["5%", "10%", "15%", "20%"], c: 0 },
+    { q: "An article is sold at 5% profit instead of 5% loss, gaining ₹5 more. Find CP.", o: ["₹50", "₹100", "₹60", "₹75"], c: 0 },
+    { q: "Successive discounts of 10% and 10% result in:", o: ["20%", "19%", "18%", "21%"], c: 1 },
+    { q: "If the profit is $\\frac{1}{10}$ of the CP, find the ratio of CP to SP.", o: ["10:11", "9:10", "11:10", "1:10"], c: 0 },
+    { q: "What is the result of $\\sqrt{144}$ as the cost price if it's sold for ₹15?", o: ["20% profit", "25% profit", "10% loss", "15% profit"], c: 1 },
+    { q: "If a person sells an item at $\\frac{7}{8}$ of its CP, find the loss percentage.", o: ["12.5%", "14%", "10%", "15%"], c: 0 },
+    { q: "A man buys oranges at 10 for ₹8 and sells them at 8 for ₹10. Find profit %.", o: ["56.25%", "50%", "45%", "60%"], c: 0 },
+    { q: "A book was sold for ₹27.50 with a profit of 10%. If it were sold for ₹25.75, find the new profit %.", o: ["3%", "5%", "4%", "2%"], c: 0 },
+    { q: "If the cost price is 95% of the selling price, what is the profit percent?", o: ["5.26%", "5%", "4.75%", "6%"], c: 0 },
+    { q: "A dealer buys a table listed at ₹1500 and gets successive discounts of 20% and 10%. He spends ₹20 on transport and sells it for ₹1100. Find profit %.", o: ["0%", "2%", "5%", "10%"], c: 0 },
+    { q: "The profit earned by selling an item for ₹900 is double the loss incurred when sold for ₹450$. Find CP.", o: ["₹600", "₹500", "₹550", "₹650"], c: 0 },
+    { q: "A shopkeeper marks his goods at such a price that after allowing a discount of 12.5%, he makes a profit of 20%. If CP is ₹140, find MP.", o: ["₹192", "₹180", "₹175", "₹200"], c: 0 },
+    { q: "If the difference between SP and CP is ₹210 and the profit is 25%, find the SP.", o: ["₹1050", "₹840", "₹950", "₹1000"], c: 0 },
+    { q: "A man sold two watches for ₹3750 each. On one he gained 5% and on other he lost 5%. Net loss % is:", o: ["0.25%", "0.5%", "1%", "No loss"], c: 0 },
+    { q: "By selling 100 notebooks, a shopkeeper gains the CP of 20 notebooks. His gain percentage is:", o: ["20%", "25%", "15%", "10%"], c: 0 }
+];
+
+
+
+let cur = 0;
+let userAnswers = new Array(quizData.length).fill(null);
+let viewed = new Array(quizData.length).fill(false);
+let submitted = false;
+let timeLeft = 3000;
+let timer;
+
+function init() {
+    const dots = document.getElementById('nav-dots');
+    for(let i=0; i<50; i++) {
+        dots.innerHTML += `<div class="nav-dot" id="dot-${i}" onclick="jump(${i})">${i+1}</div>`;
+    }
+    loadQ();
+    startTimer();
+}
+
+function toggleSidebar() { document.getElementById('nav-sidebar').classList.toggle('open'); }
+
+function loadQ() {
+    viewed[cur] = true;
+    updateNav();
+    const q = quizData[cur];
+    document.getElementById('question-body').innerHTML = `<div class="question-text">${cur+1}. ${q.q}</div>`;
+    const opts = document.getElementById('options-body');
+    opts.innerHTML = '';
+    
+    q.o.forEach((o, i) => {
+        let classes = 'opt';
+        if (submitted) {
+            classes += ' locked';
+            if (i === q.c) classes += ' is-correct';
+            if (userAnswers[cur] === i && i !== q.c) classes += ' is-wrong';
+        } else {
+            if (userAnswers[cur] === i) classes += ' selected';
+        }
+        opts.innerHTML += `<div class="${classes}" onclick="select(${i})">${o}</div>`;
+    });
+    
+    document.getElementById('prev-btn').disabled = cur === 0;
+    document.getElementById('next-btn').innerHTML = (cur === 49 && !submitted) ? "Submit Exam" : "Next Question →";
+    
+    // Explicit MathJax re-render
+    if (window.MathJax && MathJax.typesetPromise) {
+        MathJax.typesetPromise();
+    }
+}
+
+function select(idx) {
+    if(submitted) return;
+    userAnswers[cur] = idx;
+    loadQ();
+}
+
+function updateNav() {
+    for(let i=0; i<50; i++) {
+        const dot = document.getElementById(`dot-${i}`);
+        dot.classList.remove('active', 'viewed', 'attempted');
+        if(i === cur) dot.classList.add('active');
+        if(userAnswers[i] !== null) dot.classList.add('attempted');
+        else if(viewed[i]) dot.classList.add('viewed');
+    }
+}
+
+function move(dir) {
+    if(cur === 49 && dir === 1 && !submitted) { finish(); return; }
+    cur = (cur + dir + 50) % 50;
+    loadQ();
+}
+
+function jump(i) { cur = i; loadQ(); }
+
+function startTimer() {
+    timer = setInterval(() => {
+        if(submitted) return;
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+        if(timeLeft-- <= 0) finish();
+    }, 1000);
+}
+
+function finish() {
+    submitted = true;
+    clearInterval(timer);
+    document.getElementById('timer').innerText = "DONE";
+    let score = 0;
+    userAnswers.forEach((ans, i) => { if(ans === quizData[i].c) score++; });
+    document.getElementById('exam-status').innerHTML = `<b>Score: ${score}/50</b>`;
+    loadQ();
+}
+
+init();
+</script>
+</body>
+</html>

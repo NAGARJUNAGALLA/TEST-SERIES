@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ratios & Proportions - Professional Exam</title>
+    
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], processEscapes: true },
+            options: { renderActions: { addMenu: [] } }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+    <style>
+        :root {
+            --primary: #1e293b; --secondary: #3b82f6; --bg: #f8fafc;
+            --correct: #10b981; --wrong: #ef4444; --accent: #f59e0b;
+            --skipped: #ef4444; --answered: #10b981;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .header { background: var(--primary); color: white; padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; z-index: 1001; }
+        .timer-box { background: rgba(0,0,0,0.3); padding: 8px 25px; border-radius: 8px; border: 2px solid var(--accent); font-family: monospace; font-size: 1.4rem; color: var(--accent); }
+        .menu-toggle { cursor: pointer; font-size: 1.8rem; user-select: none; }
+        
+        .main-layout { display: flex; flex: 1; position: relative; overflow: hidden; }
+        .quiz-container { flex: 1; padding: 30px 40px 120px 40px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
+        
+        #nav-sidebar { width: 320px; background: white; border-left: 1px solid #e2e8f0; padding: 20px; position: absolute; right: -360px; top: 0; bottom: 0; transition: right 0.3s; z-index: 1000; box-shadow: -5px 0 15px rgba(0,0,0,0.05); }
+        #nav-sidebar.open { right: 0; }
+        
+        .nav-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px;}
+        .nav-dot { height: 40px; width: 40px; border: 1px solid #cbd5e0; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 8px; background: white; transition: 0.3s; }
+        
+        .nav-dot.ans { background: var(--answered) !important; color: white; border-color: var(--answered); }
+        .nav-dot.skip { background: var(--skipped) !important; color: white; border-color: var(--skipped); }
+        .nav-dot.active { border: 3px solid var(--secondary); font-weight: bold; transform: scale(1.05); }
+
+        .legend { font-size: 0.85rem; border-top: 1px solid #eee; padding-top: 15px; }
+        .legend-item { display: flex; align-items: center; margin-bottom: 5px; }
+        .legend-box { width: 15px; height: 15px; border-radius: 3px; margin-right: 10px; }
+
+        .q-card { background: white; width: 100%; max-width: 850px; padding: 45px; border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); border-top: 6px solid var(--secondary); margin-top: 10px; }
+        .question-text { font-size: 1.4rem; line-height: 1.6; margin-bottom: 30px; color: #1e293b; }
+        .options-grid { display: grid; gap: 15px; }
+        .opt { padding: 18px 25px; border: 2px solid #f1f5f9; border-radius: 10px; cursor: pointer; font-size: 1.2rem; background: #fff; transition: 0.2s; }
+        .selected { background: #eff6ff !important; border-color: var(--secondary) !important; }
+        .is-correct { background: #ecfdf5 !important; border-color: var(--correct) !important; color: #065f46; font-weight: bold; }
+        .is-wrong { background: #fef2f2 !important; border-color: var(--wrong) !important; color: #991b1b; }
+        .locked { pointer-events: none; }
+
+        .fixed-controls { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 20px 0; border-top: 1px solid #e2e8f0; display: flex; justify-content: center; gap: 30px; z-index: 999; }
+        .btn { padding: 14px 40px; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; font-size: 1.1rem; background: var(--primary); color: white; min-width: 150px; }
+        #next-btn { background: var(--secondary); }
+        #submit-btn { background: var(--answered); display: none; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div id="exam-status"><b>Mathematics:</b> Ratios & Proportions</div>
+    <div class="timer-box" id="timer">50:00</div>
+    <div class="menu-toggle" onclick="toggleSidebar()">☰</div>
+</div>
+
+<div class="main-layout">
+    <div class="quiz-container">
+        <div id="q-view" class="q-card">
+            <div id="question-body"></div>
+            <div class="options-grid" id="options-body"></div>
+        </div>
+    </div>
+    <div id="nav-sidebar">
+        <h3 style="margin-top:0">Navigator</h3>
+        <div class="nav-grid" id="nav-dots"></div>
+        <div class="legend">
+            <div class="legend-item"><div class="legend-box" style="background: var(--answered)"></div> Answered</div>
+            <div class="legend-item"><div class="legend-box" style="background: var(--skipped)"></div> Viewed & Skipped</div>
+            <div class="legend-item"><div class="legend-box" style="background: white; border: 1px solid #ccc;"></div> Not Viewed</div>
+        </div>
+    </div>
+</div>
+
+<div class="fixed-controls">
+    <button class="btn" id="prev-btn" onclick="move(-1)">← Prev</button>
+    <button class="btn" id="next-btn" onclick="move(1)">Next →</button>
+    <button class="btn" id="submit-btn" onclick="finish()">Submit Final Exam</button>
+</div>
+
+<script>
+const quizData = [
+    { q: "If $A:B = 2:3$ and $B:C = 4:5$, then $A:B:C$ is:", o: ["$8:12:15$", "$2:4:5$", "$8:10:15$", "$12:8:15$"], c: 0 },
+    { q: "The ratio of two numbers is $3:4$ and their sum is $420$. Find the smaller number.", o: ["$180$", "$240$", "$120$", "$210$"], c: 0 },
+    { q: "What is the third proportional to $12$ and $18$?", o: ["$27$", "$30$", "$24$", "$36$"], c: 0 },
+    { q: "Find the mean proportional between $4$ and $16$.", o: ["$8$", "$10$", "$12$", "$6$"], c: 0 },
+    { q: "If $x:y = 5:2$, then $(8x+9y):(8x+2y)$ is:", o: ["$29:22$", "$58:44$", "$29:21$", "$30:22$"], c: 0 },
+    { q: "Divide ₹1200 among A, B, and C in the ratio $2:3:5$. How much does B get?", o: ["₹360", "₹240", "₹600", "₹300$"], c: 0 },
+    { q: "A bag contains 50p, 25p and 10p coins in the ratio $5:9:4$ amounting to ₹206. Find the number of 50p coins.", o: ["$200$", "$360$", "$160$", "$150$"], c: 0 },
+    { q: "The duplicate ratio of $3:4$ is:", o: ["$9:16$", "$16:9$", "$\sqrt{3}:2$", "$6:8$"], c: 0 },
+    { q: "The sub-duplicate ratio of $25:36$ is:", o: ["$5:6$", "$6:5$", "$625:1296$", "$10:12$"], c: 0 },
+    { q: "The triplicate ratio of $2:3$ is:", o: ["$8:27$", "$4:9$", "$6:9$", "$27:8$"], c: 0 },
+    { q: "If $A$ is $\\frac{1}{3}$ of $B$ and $B$ is $\\frac{1}{2}$ of $C$, then $A:B:C$ is:", o: ["$1:3:6$", "$2:3:6$", "$1:2:6$", "$3:1:2$"], c: 0 },
+    { q: "The salaries of A, B, and C are in the ratio $2:3:5$. If increments of 15%, 10% and 20% are allowed, the new ratio is:", o: ["$23:33:60$", "$15:10:20$", "$3:4:5$", "$22:11:15$"], c: 0 },
+    { q: "If $0.75:x :: 5:8$, then $x$ is equal to:", o: ["$1.2$", "$1.12$", "$1.25$", "$1.3$"], c: 0 },
+    { q: "If ₹782 be divided into three parts proportional to $\\frac{1}{2} : \\frac{2}{3} : \\frac{3}{4}$, find the first part.", o: ["₹204", "₹272", "₹306", "₹190"], c: 0 },
+    { q: "The ratio of boys and girls in a school is $9:5$. If total students are 1050, find number of girls.", o: ["$375$", "$675$", "$400$", "$350$"], c: 0 },
+    { q: "Find the fourth proportional to $4, 9, 12$.", o: ["$27$", "$36$", "$18$", "$24$"], c: 0 },
+    { q: "Two numbers are in the ratio $1:2$. If 7 is added to both, the ratio becomes $3:5$. Find the numbers.", o: ["$14, 28$", "$7, 14$", "$21, 42$", "$10, 20$"], c: 0 },
+    { q: "If $4x^2 - 3y^2 : 2x^2 + 5y^2 = 12 : 19$, find $x:y$.", o: ["$3:2$", "$2:3$", "$4:5$", "$5:4$"], c: 0 },
+    { q: "A sum of money is divided among A, B, C, D in the ratio $5:2:4:3$. If C gets ₹1000 more than D, find B's share.", o: ["₹2000", "₹500", "₹1500", "₹1000"], c: 0 },
+    { q: "In a ratio $11:14$, what must be added to each term to make it $3:4$?", o: ["$1$", "$2$", "$3$", "$4$"], c: 0 },
+    { q: "The ratio of ages of two persons is $5:7$. 18 years ago, their ages were in the ratio $8:13$. Find their present ages.", o: ["$50, 70$", "$40, 56$", "$25, 35$", "$30, 42$"], c: 0 },
+    { q: "$\sqrt{625} : x = x : 1$, find $x$.", o: ["$25$", "$5$", "$50$", "$12.5$"], c: 0 },
+    { q: "If $x:y = 3:4$, find $(7x+3y):(7x-3y)$.", o: ["$11:3$", "$3:11$", "$33:9$", "$9:33$"], c: 0 },
+    { q: "The mean proportional between $(3+\sqrt{2})$ and $(12-\sqrt{32})$ is:", o: ["$\sqrt{28}$", "$2$", "$6$", "$15$"], c: 0 },
+    { q: "The ratio of incomes of A and B is $5:4$ and ratio of their expenditures is $3:2$. If each saves ₹1600, find income of A.", o: ["₹4000", "₹3200", "₹4800", "₹5000$"], c: 0 },
+    { q: "What number should be subtracted from each of $14, 17, 34, 42$ so that remainders are proportional?", o: ["$2$", "$1$", "$3$", "$4$"], c: 0 },
+    { q: "If $\\frac{x}{5} = \\frac{y}{8}$, then $(x+5):(y+8)$ is:", o: ["$5:8$", "$8:5$", "$1:1$", "$13:13$"], c: 0 },
+    { q: "If $2A=3B=4C$, then $A:B:C$ is:", o: ["$6:4:3$", "$2:3:4$", "$4:3:2$", "$3:4:6$"], c: 0 },
+    { q: "The ratio of land to water on Earth is $1:2$. In Northern Hemisphere it is $2:3$. Find ratio in Southern Hemisphere.", o: ["$4:11$", "$11:4$", "$3:2$", "$5:9$"], c: 0 },
+    { q: "Divide ₹672 in the ratio $5:3$.", o: ["$420, 252$", "$400, 272$", "$450, 222$", "$410, 262$"], c: 0 },
+    { q: "Ratio of milk and water in 40L mixture is $7:1$. How much water should be added to make it $3:1$?", o: ["$6\\frac{2}{3}$L", "$5$L", "$6$L", "$7$L$"], c: 0 },
+    { q: "If $\\frac{a}{b} = \\frac{c}{d} = \\frac{e}{f} = 3$, find $\\frac{2a^2+3c^2+4e^2}{2b^2+3d^2+4f^2}$.", o: ["$9$", "$3$", "$6$", "$27$"], c: 0 },
+    { q: "A and B have money in ratio $2:1$. A gives ₹2 to B and ratio becomes $1:1$. Find initial money of A.", o: ["₹8", "₹12", "₹6", "₹10$"], c: 0 },
+    { q: "If $a:b = c:d$, then $\\frac{ma+nc}{mb+nd}$ is equal to:", o: ["$a/b$", "$m/n$", "$1$", "$ac/bd$"], c: 0 },
+    { q: "A sum of ₹1300 is divided among A, B, C, D such that $\\frac{\\text{A's share}}{\\text{B's share}} = \\frac{\\text{B's share}}{\\text{C's share}} = \\frac{\\text{C's share}}{\\text{D's share}} = \\frac{2}{3}$. Find A's share.", o: ["₹160", "₹240", "₹360", "₹540$"], c: 0 },
+    { q: "Find two numbers such that their mean proportional is 18 and third proportional is 144.", o: ["$9, 36$", "$6, 54$", "$12, 27$", "$18, 18$"], c: 0 },
+    { q: "The ratio of copper and zinc in brass is $13:7$. How much zinc is in 100kg of brass?", o: ["$35$kg", "$65$kg", "$30$kg", "$40$kg$"], c: 0 },
+    { q: "Two whole numbers whose sum is 72 cannot be in the ratio:", o: ["$3:4$", "$3:5$", "$5:7$", "$4:5$"], c: 0 },
+    { q: "In 30L mixture, ratio of milk and water is $7:3$. Find quantity of water.", o: ["$9$L", "$21$L", "$12$L", "$10$L$"], c: 0 },
+    { q: "If $x:y = 1:3$, find $(7x^2+3xy):(2x^2+xy)$.", o: ["$16:5$", "$5:16$", "$4:1$", "$1:4$"], c: 0 },
+    { q: "Compound ratio of $2:3, 6:11, 11:2$ is:", o: ["$2:1$", "$1:2$", "$11:3$", "$3:11$"], c: 0 },
+    { q: "If $p:q = r:s = t:u = 2:3$, find $(mp+nr+ot):(mq+ns+ou)$.", o: ["$2:3$", "$3:2$", "$4:9$", "$1:1$"], c: 0 },
+    { q: "Ratio of incomes of A and B is $9:4$. A saves ₹200 more than B. If both save 10%, find income of A.", o: ["₹3600", "₹1600", "₹4000", "₹3000$"], c: 0 },
+    { q: "If $x$ varies inversely as $y$, and $x=10$ when $y=6$, find $x$ when $y=12$.", o: ["$5$", "$20$", "$15$", "$7.5$"], c: 0 },
+    { q: "If 15 men can reap a field in 35 days, in how many days will 21 men reap it?", o: ["$25$", "$30$", "$20$", "$28$"], c: 0 },
+    { q: "Ratio of speed of three cars is $2:3:4$. Ratio of time taken to cover same distance is:", o: ["$6:4:3$", "$4:3:2$", "$2:3:4$", "$3:4:6$"], c: 0 },
+    { q: "Gold is 19 times as heavy as water and copper 9 times. In what ratio should they be mixed to be 15 times heavy?", o: ["$3:2$", "$2:3$", "$1:1$", "$4:5$"], c: 0 },
+    { q: "If $x:y = 3:1$, find $(x^3-y^3):(x^3+y^3)$.", o: ["$13:14$", "$14:13$", "$10:11$", "$11:10$"], c: 0 },
+    { q: "In a mix of 60L, ratio of milk and water is $2:1$. To make it $1:2$, water to be added is:", o: ["$60$L", "$40$L", "$50$L", "$30$L$"], c: 0 },
+    { q: "Find the value of $x$ if $10, 20, x, 80$ are in proportion.", o: ["$40$", "$30$", "$50$", "$60$"], c: 0 }
+];
+
+let cur = 0; 
+let userAnswers = new Array(quizData.length).fill(null);
+let viewed = new Array(quizData.length).fill(false);
+let submitted = false; 
+let timeLeft = 3000; 
+let timerInterval;
+
+function init() {
+    const dots = document.getElementById('nav-dots');
+    for(let i=0; i<quizData.length; i++) {
+        dots.innerHTML += `<div class="nav-dot" id="dot-${i}" onclick="jump(${i})">${i+1}</div>`;
+    }
+    loadQ(); startTimer();
+}
+
+function loadQ() {
+    const q = quizData[cur];
+    viewed[cur] = true; 
+    
+    document.getElementById('question-body').innerHTML = `<div class="question-text">${cur+1}. ${q.q}</div>`;
+    const opts = document.getElementById('options-body');
+    opts.innerHTML = '';
+    
+    q.o.forEach((o, i) => {
+        let cls = 'opt';
+        if (submitted) {
+            cls += ' locked';
+            if (i === q.c) cls += ' is-correct';
+            if (userAnswers[cur] === i && i !== q.c) cls += ' is-wrong';
+        } else if (userAnswers[cur] === i) cls += ' selected';
+        opts.innerHTML += `<div class="${cls}" onclick="select(${i})">${o}</div>`;
+    });
+
+    document.getElementById('prev-btn').disabled = cur === 0;
+    const nextBtn = document.getElementById('next-btn');
+    const submitBtn = document.getElementById('submit-btn');
+
+    if (!submitted) {
+        if (cur === quizData.length - 1) {
+            nextBtn.style.display = 'none';
+            submitBtn.style.display = 'block';
+        } else {
+            nextBtn.style.display = 'block';
+            submitBtn.style.display = 'none';
+        }
+    } else {
+        submitBtn.style.display = 'none';
+        nextBtn.style.display = 'block';
+        nextBtn.innerHTML = cur === quizData.length - 1 ? "End Review" : "Next →";
+    }
+
+    if (window.MathJax) MathJax.typesetPromise([document.getElementById('q-view')]);
+    updateNav();
+}
+
+function select(idx) { if(!submitted) { userAnswers[cur] = idx; loadQ(); } }
+
+function move(dir) {
+    if (submitted && cur === quizData.length - 1 && dir === 1) return;
+    cur = (cur + dir + quizData.length) % quizData.length; 
+    loadQ();
+}
+
+function jump(i) { cur = i; loadQ(); }
+function toggleSidebar() { document.getElementById('nav-sidebar').classList.toggle('open'); }
+
+function startTimer() {
+    timerInterval = setInterval(() => {
+        if(submitted) return;
+        const m = Math.floor(timeLeft / 60); const s = timeLeft % 60;
+        document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+        if(timeLeft-- <= 0) finish();
+    }, 1000);
+}
+
+function finish() {
+    submitted = true; clearInterval(timerInterval);
+    document.getElementById('timer').innerText = "REVIEW";
+    let score = 0; userAnswers.forEach((ans, i) => { if(ans === quizData[i].c) score++; });
+    document.getElementById('exam-status').innerHTML = `<b>Final Score: ${score}/${quizData.length}</b>`;
+    cur = 0; loadQ();
+}
+
+function updateNav() {
+    quizData.forEach((_, i) => {
+        const dot = document.getElementById(`dot-${i}`);
+        dot.classList.remove('active', 'ans', 'skip');
+        if (i === cur) dot.classList.add('active');
+        if (userAnswers[i] !== null) {
+            dot.classList.add('ans');
+        } else if (viewed[i]) {
+            dot.classList.add('skip');
+        }
+    });
+}
+
+window.onload = init;
+</script>
+</body>
+</html>

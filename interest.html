@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interest Mastery - Professional Exam</title>
+    
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], processEscapes: true },
+            options: { renderActions: { addMenu: [] } }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+    <style>
+        :root {
+            --primary: #1e293b; --secondary: #3b82f6; --bg: #f8fafc;
+            --correct: #10b981; --wrong: #ef4444; --accent: #f59e0b;
+            --skipped: #ef4444; --answered: #10b981;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .header { background: var(--primary); color: white; padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; z-index: 1001; }
+        .timer-box { background: rgba(0,0,0,0.3); padding: 8px 25px; border-radius: 8px; border: 2px solid var(--accent); font-family: monospace; font-size: 1.4rem; color: var(--accent); }
+        .menu-toggle { cursor: pointer; font-size: 1.8rem; user-select: none; }
+        
+        .main-layout { display: flex; flex: 1; position: relative; overflow: hidden; }
+        .quiz-container { flex: 1; padding: 30px 40px 120px 40px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
+        
+        #nav-sidebar { width: 320px; background: white; border-left: 1px solid #e2e8f0; padding: 20px; position: absolute; right: -360px; top: 0; bottom: 0; transition: right 0.3s; z-index: 1000; box-shadow: -5px 0 15px rgba(0,0,0,0.05); }
+        #nav-sidebar.open { right: 0; }
+        
+        .nav-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px;}
+        .nav-dot { height: 40px; width: 40px; border: 1px solid #cbd5e0; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 8px; background: white; transition: 0.3s; }
+        
+        /* Specific Navigation Status Colors */
+        .nav-dot.ans { background: var(--answered) !important; color: white; border-color: var(--answered); }
+        .nav-dot.skip { background: var(--skipped) !important; color: white; border-color: var(--skipped); }
+        .nav-dot.active { border: 3px solid var(--secondary); font-weight: bold; transform: scale(1.05); }
+
+        .legend { font-size: 0.85rem; border-top: 1px solid #eee; padding-top: 15px; }
+        .legend-item { display: flex; align-items: center; margin-bottom: 5px; }
+        .legend-box { width: 15px; height: 15px; border-radius: 3px; margin-right: 10px; }
+
+        .q-card { background: white; width: 100%; max-width: 850px; padding: 45px; border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); border-top: 6px solid var(--secondary); margin-top: 10px; }
+        .question-text { font-size: 1.4rem; line-height: 1.6; margin-bottom: 30px; color: #1e293b; }
+        .options-grid { display: grid; gap: 15px; }
+        .opt { padding: 18px 25px; border: 2px solid #f1f5f9; border-radius: 10px; cursor: pointer; font-size: 1.2rem; background: #fff; transition: 0.2s; }
+        .selected { background: #eff6ff !important; border-color: var(--secondary) !important; }
+        .is-correct { background: #ecfdf5 !important; border-color: var(--correct) !important; color: #065f46; font-weight: bold; }
+        .is-wrong { background: #fef2f2 !important; border-color: var(--wrong) !important; color: #991b1b; }
+        .locked { pointer-events: none; }
+
+        .fixed-controls { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 20px 0; border-top: 1px solid #e2e8f0; display: flex; justify-content: center; gap: 30px; z-index: 999; }
+        .btn { padding: 14px 40px; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; font-size: 1.1rem; background: var(--primary); color: white; min-width: 150px; }
+        #next-btn { background: var(--secondary); }
+        #submit-btn { background: var(--answered); display: none; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div id="exam-status"><b>Mathematics:</b> Interest Exam</div>
+    <div class="timer-box" id="timer">50:00</div>
+    <div class="menu-toggle" onclick="toggleSidebar()">☰</div>
+</div>
+
+<div class="main-layout">
+    <div class="quiz-container">
+        <div id="q-view" class="q-card">
+            <div id="question-body"></div>
+            <div class="options-grid" id="options-body"></div>
+        </div>
+    </div>
+    <div id="nav-sidebar">
+        <h3 style="margin-top:0">Navigator</h3>
+        <div class="nav-grid" id="nav-dots"></div>
+        <div class="legend">
+            <div class="legend-item"><div class="legend-box" style="background: var(--answered)"></div> Answered</div>
+            <div class="legend-item"><div class="legend-box" style="background: var(--skipped)"></div> Viewed & Skipped</div>
+            <div class="legend-item"><div class="legend-box" style="background: white; border: 1px solid #ccc;"></div> Not Viewed</div>
+        </div>
+    </div>
+</div>
+
+<div class="fixed-controls">
+    <button class="btn" id="prev-btn" onclick="move(-1)">← Prev</button>
+    <button class="btn" id="next-btn" onclick="move(1)">Next →</button>
+    <button class="btn" id="submit-btn" onclick="finish()">Submit Final Exam</button>
+</div>
+
+<script>
+// Quiz data (Interest MCQs)
+const quizData = [
+    { q: "Find the simple interest on ₹5000 at 10% per annum for 2 years.", o: ["₹500", "₹1000", "₹1200", "₹800"], c: 1 },
+    { q: "A sum of money doubles itself in 8 years at simple interest. What is the rate of interest?", o: ["10%", "12.5%", "15%", "8%"], c: 1 },
+    { q: "What will be the compound interest on ₹10,000 for 2 years at 10% per annum, compounded annually?", o: ["₹2000", "₹2100", "₹2200", "₹1900"], c: 1 },
+    { q: "If the simple interest on a certain sum for 3 years at 5% is ₹150, find the principal.", o: ["₹1000", "₹1500", "₹1200", "₹2000"], c: 0 },
+    { q: "Find the amount if ₹800 is invested at 5% per annum simple interest for 3 years.", o: ["₹920", "₹120", "₹820", "₹900"], c: 0 },
+    { q: "At what rate of compound interest per annum will ₹1250 amount to ₹1352 in 2 years?", o: ["5%", "4%", "6%", "8%"], c: 1 },
+    { q: "The difference between SI and CI on ₹2000 for 2 years at 10% per annum is:", o: ["₹10", "₹20", "₹5", "₹15"], c: 1 },
+    { q: "In how many years will ₹3000 yield ₹1080 as simple interest at 12% per annum?", o: ["2 years", "3 years", "4 years", "2.5 years"], c: 1 },
+    { q: "Simple interest on a sum is $\\frac{4}{9}$ of the principal. If the rate and time are equal, find the rate.", o: ["$6\\frac{2}{3}$%", "5%", "6%", "7%"], c: 0 },
+    { q: "Compound interest on ₹5000 at 8% per annum for 1 year, compounded half-yearly, is:", o: ["₹400", "₹408", "₹200", "₹416"], c: 1 },
+    { q: "A sum of money placed at compound interest doubles itself in 5 years. It will amount to eight times itself in:", o: ["15 years", "10 years", "20 years", "25 years"], c: 0 },
+    { q: "Find the ratio of CI and SI on a given sum at 10% for 2 years.", o: ["21:20", "20:21", "11:10", "10:11"], c: 0 },
+    { q: "The value of a machine depreciates at 10% per annum. If its present value is ₹1,62,000, what was its value 2 years ago?", o: ["₹2,00,000", "₹1,80,000", "₹1,90,000", "₹2,10,000"], c: 0 },
+    { q: "Find the SI on ₹7200 at $12\\frac{1}{2}$% per annum for 9 months.", o: ["₹675", "₹900", "₹800", "₹750"], c: 0 },
+    { q: "Find the CI on ₹8000 for 1 year at 10% per annum compounded half-yearly.", o: ["₹820", "₹800", "₹840", "₹400"], c: 0 },
+    { q: "Find the principal if the difference between CI and SI at 5% for 2 years is ₹1.", o: ["₹400", "₹500", "₹600", "₹800"], c: 0 },
+    { q: "If $\\sqrt{A/P} = 1.1$, find the rate of interest for 2 years CI.", o: ["10%", "20%", "5%", "11%"], c: 0 },
+    { q: "Find the amount of ₹2500 for 2 years at 10% per annum SI.", o: ["₹3000", "₹2750", "₹3250", "₹2900"], c: 0 },
+    { q: "The population of a town increases by 5% annually. If it is 15,435 now, its population 2 years ago was:", o: ["14,000", "15,000", "13,500", "14,500"], c: 0 },
+    { q: "At what rate percent per annum will a sum of money double in 16 years SI?", o: ["$6\\frac{1}{4}$%", "$6\\frac{1}{2}$%", "$7$%", "$8$%"], c: 0 },
+    { q: "Find the amount on ₹12,500 for 2 years at 12% per annum SI.", o: ["₹15,500", "₹14,000", "₹15,000", "₹16,000"], c: 0 },
+    { q: "What will be the SI on ₹4000 at $12\\frac{1}{2}$% for 4 years?", o: ["₹2000", "₹1500", "₹2500", "₹1000"], c: 0 },
+    { q: "Find CI on ₹10000 at 10% for 2 years compounded half-yearly.", o: ["₹2155.06", "₹2100", "₹2000", "₹2200"], c: 0 },
+    { q: "If SI is $\\frac{1}{16}$ of P and Time = Rate, find Rate.", o: ["$2.5$%", "$4$%", "$5$%", "$2$%"], c: 0 },
+    { q: "Find the amount if ₹5000 is compounded annually at 10% for 3 years.", o: ["₹6655", "₹6000", "₹6500", "₹6600"], c: 0 },
+    { q: "Find the time in which ₹500 doubles at 5% SI.", o: ["20 years", "10 years", "15 years", "25 years"], c: 0 },
+    { q: "Difference between CI and SI on ₹1000 at 10% for 3 years is?", o: ["₹31", "₹30", "₹32", "₹33"], c: 0 },
+    { q: "Principal = ₹2000, Rate = 5%, Time = 2 years. Amount (CI)?", o: ["₹2205", "₹2200", "₹2105", "₹2210"], c: 0 },
+    { q: "In what time will ₹1000 amount to ₹1331 at 10% CI?", o: ["3 years", "2 years", "4 years", "5 years"], c: 0 },
+    { q: "If the rate is 5% compounded half-yearly, the factor is:", o: ["$1.025$", "$1.05$", "$1.10$", "$1.0125$"], c: 0 },
+    { q: "Find SI on ₹600 for 3 years at 10% per annum.", o: ["₹180", "₹120", "₹200", "₹150"], c: 0 },
+    { q: "Amount on ₹800 at 5% SI for 2 years?", o: ["₹880", "₹840", "₹900", "₹860"], c: 0 },
+    { q: "Sum that yields ₹60 SI in 3 years at 5%?", o: ["₹400", "₹500", "₹300", "₹600"], c: 0 },
+    { q: "Rate at which ₹1000 becomes ₹1200 in 2 years SI?", o: ["10%", "12%", "8%", "15%"], c: 0 },
+    { q: "Find CI on ₹2000 at 10% for 1 year compounded half-yearly.", o: ["₹205", "₹200", "₹210", "₹215"], c: 0 },
+    { q: "Formula for Amount in SI is:", o: ["$P(1 + \\frac{RT}{100})$", "$P(1 + \\frac{R}{100})^T$", "$P + \\frac{PRT}{100}$", "Both A and C"], c: 3 },
+    { q: "Principal that yields ₹1000 interest in 5 years at 10% SI?", o: ["₹2000", "₹1000", "₹2500", "₹1500"], c: 0 },
+    { q: "If CI - SI = ₹121 for 2 years at 10%, find P.", o: ["₹12100", "₹10000", "₹12000", "₹11000"], c: 0 },
+    { q: "Rate of interest if ₹500 yields ₹100 in 4 years SI?", o: ["5%", "4%", "6%", "2%"], c: 0 },
+    { q: "Amount on ₹1000 at 10% CI for 1.5 years compounded half-yearly?", o: ["₹1157.63", "₹1150", "₹1200", "₹1160"], c: 0 },
+    { q: "Depreciation rate of 10% on ₹1000 for 1 year?", o: ["₹900", "₹1100", "₹910", "₹890"], c: 0 },
+    { q: "Principal = ₹5000, Amount = ₹5800, Time = 2 years. Rate (SI)?", o: ["8%", "10%", "5%", "6%"], c: 0 },
+    { q: "Find the fourth power of 1.1 (used in 4-year CI at 10%).", o: ["$1.4641$", "$1.331$", "$1.21$", "$1.5$"], c: 0 },
+    { q: "Quarterly rate for 12% per annum?", o: ["3%", "4%", "6%", "1%"], c: 0 },
+    { q: "Number of conversion periods in 2 years compounded quarterly?", o: ["8", "4", "2", "6"], c: 0 },
+    { q: "A sum triples itself in 20 years SI. Rate?", o: ["10%", "15%", "5%", "20%"], c: 0 },
+    { q: "CI on ₹1000 for 1 year at 20% compounded quarterly?", o: ["₹215.51", "₹200", "₹210", "₹220"], c: 0 },
+    { q: "Principal = ₹1200, SI = ₹240, Rate = 5%. Time?", o: ["4 years", "2 years", "5 years", "3 years"], c: 0 },
+    { q: "If Amount = ₹1331, Principal = ₹1000, Time = 3 years. Rate (CI)?", o: ["10%", "5%", "11%", "12%"], c: 0 },
+    { q: "SI on ₹2500 at 4% for 2.5 years?", o: ["₹250", "₹200", "₹300", "₹150"], c: 0 }
+];
+
+let cur = 0; 
+let userAnswers = new Array(quizData.length).fill(null);
+let viewed = new Array(quizData.length).fill(false);
+let submitted = false; 
+let timeLeft = 3000; 
+let timerInterval;
+
+function init() {
+    const dots = document.getElementById('nav-dots');
+    for(let i=0; i<quizData.length; i++) {
+        dots.innerHTML += `<div class="nav-dot" id="dot-${i}" onclick="jump(${i})">${i+1}</div>`;
+    }
+    loadQ(); startTimer();
+}
+
+function loadQ() {
+    const q = quizData[cur];
+    viewed[cur] = true; // Mark as viewed
+    
+    document.getElementById('question-body').innerHTML = `<div class="question-text">${cur+1}. ${q.q}</div>`;
+    const opts = document.getElementById('options-body');
+    opts.innerHTML = '';
+    
+    q.o.forEach((o, i) => {
+        let cls = 'opt';
+        if (submitted) {
+            cls += ' locked';
+            if (i === q.c) cls += ' is-correct';
+            if (userAnswers[cur] === i && i !== q.c) cls += ' is-wrong';
+        } else if (userAnswers[cur] === i) cls += ' selected';
+        opts.innerHTML += `<div class="${cls}" onclick="select(${i})">${o}</div>`;
+    });
+
+    document.getElementById('prev-btn').disabled = cur === 0;
+    const nextBtn = document.getElementById('next-btn');
+    const submitBtn = document.getElementById('submit-btn');
+
+    if (!submitted) {
+        if (cur === quizData.length - 1) {
+            nextBtn.style.display = 'none';
+            submitBtn.style.display = 'block';
+        } else {
+            nextBtn.style.display = 'block';
+            submitBtn.style.display = 'none';
+        }
+    } else {
+        submitBtn.style.display = 'none';
+        nextBtn.style.display = 'block';
+        nextBtn.innerHTML = cur === quizData.length - 1 ? "End Review" : "Next →";
+    }
+
+    if (window.MathJax) MathJax.typesetPromise([document.getElementById('q-view')]);
+    updateNav();
+}
+
+function select(idx) { if(!submitted) { userAnswers[cur] = idx; loadQ(); } }
+
+function move(dir) {
+    if (submitted && cur === quizData.length - 1 && dir === 1) return;
+    cur = (cur + dir + quizData.length) % quizData.length; 
+    loadQ();
+}
+
+function jump(i) { cur = i; loadQ(); }
+function toggleSidebar() { document.getElementById('nav-sidebar').classList.toggle('open'); }
+
+function startTimer() {
+    timerInterval = setInterval(() => {
+        if(submitted) return;
+        const m = Math.floor(timeLeft / 60); const s = timeLeft % 60;
+        document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+        if(timeLeft-- <= 0) finish();
+    }, 1000);
+}
+
+function finish() {
+    submitted = true; clearInterval(timerInterval);
+    document.getElementById('timer').innerText = "REVIEW";
+    let score = 0; userAnswers.forEach((ans, i) => { if(ans === quizData[i].c) score++; });
+    document.getElementById('exam-status').innerHTML = `<b>Final Score: ${score}/${quizData.length}</b>`;
+    cur = 0; loadQ();
+}
+
+function updateNav() {
+    quizData.forEach((_, i) => {
+        const dot = document.getElementById(`dot-${i}`);
+        dot.classList.remove('active', 'ans', 'skip');
+        
+        if (i === cur) dot.classList.add('active');
+        
+        if (userAnswers[i] !== null) {
+            dot.classList.add('ans');
+        } else if (viewed[i]) {
+            dot.classList.add('skip');
+        }
+    });
+}
+
+window.onload = init;
+</script>
+</body>
+</html>

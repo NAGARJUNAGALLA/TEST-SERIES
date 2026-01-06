@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraction Word Problems - Professional Exam Mode</title>
+    
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                enableMenu: false
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        console.log('MathJax is ready');
+                    });
+                }
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+    <style>
+        :root {
+            --primary: #1a365d;
+            --secondary: #2b6cb0;
+            --bg: #f7fafc;
+            --correct: #38a169;
+            --wrong: #e53e3e;
+            --accent: #ed8936;
+        }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        .header { background: var(--primary); color: white; padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; z-index: 1001; }
+        .timer-box { background: rgba(0,0,0,0.2); padding: 8px 20px; border-radius: 8px; border: 2px solid var(--accent); font-family: monospace; font-size: 1.4rem; color: var(--accent); }
+        .menu-toggle { cursor: pointer; font-size: 1.8rem; }
+
+        .main-layout { display: flex; flex: 1; position: relative; overflow: hidden; }
+
+        .quiz-container { flex: 1; padding: 40px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
+
+        #nav-sidebar { width: 300px; background: white; border-left: 1px solid #e2e8f0; padding: 20px; overflow-y: auto; position: absolute; right: -350px; top: 0; bottom: 0; transition: 0.3s; z-index: 1000; box-shadow: -4px 0 15px rgba(0,0,0,0.05); }
+        #nav-sidebar.open { right: 0; }
+        
+        .nav-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        .nav-dot { height: 40px; width: 40px; border: 1px solid #cbd5e0; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 6px; background: white; }
+        .nav-dot.viewed { background: #feb2b2; border-color: #fc8181; }
+        .nav-dot.attempted { background: #9ae6b4 !important; border-color: #68d391; }
+        .nav-dot.active { border: 3px solid var(--secondary); transform: scale(1.1); font-weight: bold; }
+
+        .q-card { background: white; width: 100%; max-width: 850px; padding: 45px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-top: 20px; border-top: 5px solid var(--secondary); }
+        .question-text { font-size: 1.35rem; line-height: 1.8; margin-bottom: 30px; color: #2d3748; }
+        .options-grid { display: grid; gap: 15px; }
+        .opt { padding: 20px 25px; border: 2px solid #edf2f7; border-radius: 10px; cursor: pointer; transition: 0.2s; font-size: 1.15rem; background: #fff; }
+        .opt:hover:not(.locked) { background: #f7fafc; border-color: var(--secondary); }
+        .selected { background: #ebf8ff !important; border-color: var(--secondary) !important; }
+
+        .is-correct { background: #f0fff4 !important; border-color: var(--correct) !important; color: #22543d; font-weight: bold; }
+        .is-wrong { background: #fff5f5 !important; border-color: var(--wrong) !important; color: #822727; }
+        .locked { pointer-events: none; }
+
+        .fixed-controls { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px 0; border-top: 1px solid #e2e8f0; display: flex; justify-content: center; gap: 40px; z-index: 999; }
+        .btn { padding: 12px 40px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1.1rem; background: var(--primary); color: white; min-width: 160px; transition: 0.2s; }
+        .btn:hover { filter: brightness(1.2); }
+        #next-btn { background: var(--secondary); }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div id="exam-status"><b>Mathematics:</b> Fractions Unit Test</div>
+    <div class="timer-box" id="timer">50:00</div>
+    <div class="menu-toggle" onclick="toggleSidebar()">☰</div>
+</div>
+
+<div class="main-layout">
+    <div class="quiz-container">
+        <div id="q-view" class="q-card">
+            <div id="question-body"></div>
+            <div class="options-grid" id="options-body"></div>
+        </div>
+    </div>
+    <div id="nav-sidebar">
+        <h3 style="margin-top:0">Question Map</h3>
+        <div class="nav-grid" id="nav-dots"></div>
+    </div>
+</div>
+
+<div class="fixed-controls" id="control-bar">
+    <button class="btn" id="prev-btn" onclick="move(-1)">← Previous</button>
+    <button class="btn" id="next-btn" onclick="move(1)">Next Question →</button>
+</div>
+
+<script>
+const quizData = [
+    { q: "A recipe requires $\\frac{3}{4}$ cup of milk. If you want to triple the recipe, how much milk do you need?", o: ["$2\\frac{1}{4}$ cups", "$1\\frac{1}{2}$ cups", "$3$ cups", "$2\\frac{1}{2}$ cups"], c: 0 },
+    { q: "A cake is cut into $12$ equal slices. If $\\frac{1}{3}$ is eaten by children and $\\frac{1}{4}$ by adults, how many slices are left?", o: ["$5$ slices", "$7$ slices", "$6$ slices", "$4$ slices"], c: 0 },
+    { q: "Subtracting $\\frac{3}{10}$ from $\\frac{4}{5}$ gives which result?", o: ["$\\frac{1}{2}$", "$\\frac{1}{5}$", "$\\frac{7}{10}$", "$\\frac{11}{10}$"], c: 0 },
+    { q: "A piece of cloth is $5$ meters long. A tailor cuts a piece $2\\frac{3}{5}$ meters long. How much cloth is left?", o: ["$2\\frac{2}{5}$ m", "$3\\frac{2}{5}$ m", "$2\\frac{1}{5}$ m", "$3\\frac{1}{5}$ m"], c: 0 },
+    { q: "If $\\frac{5}{8}$ of the students in a school of $400$ are boys, find the number of girls.", o: ["$150$", "$250$", "$200$", "$175$"], c: 0 },
+    { q: "Multiply $2\\frac{1}{2}$ and $1\\frac{1}{5}$.", o: ["$3$", "$2\\frac{1}{10}$", "$3\\frac{1}{5}$", "$3\\frac{1}{2}$"], c: 0 },
+    { q: "A water tank is $\\frac{2}{3}$ full. If it contains $60$ liters, what is its total capacity?", o: ["$90$ liters", "$80$ liters", "$100$ liters", "$40$ liters"], c: 0 },
+    { q: "Divide $\\frac{7}{8}$ by $\\frac{14}{16}$.", o: ["$1$", "$\\frac{1}{2}$", "$2$", "$\\frac{49}{64}$"], c: 0 },
+    { q: "Find the value of $x$ if $x \\times \\frac{4}{9} = 36$.", o: ["$81$", "$16$", "$45$", "$9$"], c: 0 },
+    { q: "What is the reciprocal of $5\\frac{1}{3}$?", o: ["$\\frac{3}{16}$", "$\\frac{16}{3}$", "$\\frac{3}{15}$", "$\\frac{1}{16}$"], c: 0 },
+    { q: "Which fraction is equivalent to $\\frac{18}{24}$?", o: ["$\\frac{3}{4}$", "$\\frac{2}{3}$", "$\\frac{4}{5}$", "$\\frac{6}{8}$"], c: 0 },
+    { q: "A jogger runs $\\frac{1}{4}$ km in the morning and $\\frac{2}{3}$ km in the evening. Total distance?", o: ["$\\frac{11}{12}$ km", "$\\frac{3}{7}$ km", "$\\frac{5}{12}$ km", "$1$ km"], c: 0 },
+    { q: "Of the animals in a zoo, $\\frac{2}{7}$ are mammals. If there are $140$ animals, how many are NOT mammals?", o: ["$100$", "$40$", "$80$", "$60$"], c: 0 },
+    { q: "Simplify: $\\frac{5}{6} \\div 5$.", o: ["$\\frac{1}{6}$", "$1$", "$\\frac{25}{6}$", "$\\frac{1}{30}$"], c: 0 },
+    { q: "A book is $2$ cm thick. How high is a stack of $15\\frac{1}{2}$ such books?", o: ["$31$ cm", "$30$ cm", "$30\\frac{1}{2}$ cm", "$28$ cm"], c: 0 },
+    { q: "If a car travels $15$ km on $\\frac{1}{2}$ liter of petrol, how much petrol is needed for $60$ km?", o: ["$2$ liters", "$4$ liters", "$1.5$ liters", "$3$ liters"], c: 0 },
+    { q: "Which of the following is an improper fraction?", o: ["$\\frac{9}{4}$", "$\\frac{4}{9}$", "$\\frac{1}{2}$", "$\\frac{3}{5}$"], c: 0 },
+    { q: "What is $\\frac{3}{5}$ of $\\$500$?", o: ["$\\$300$", "$\\$200$", "$\\$150$", "$\\$350$"], c: 0 },
+    { q: "Solve: $10 - 4\\frac{2}{3}$.", o: ["$5\\frac{1}{3}$", "$6\\frac{1}{3}$", "$5\\frac{2}{3}$", "$6\\frac{2}{3}$"], c: 0 },
+    { q: "A bag of rice weighs $40$ kg. If $\\frac{3}{8}$ of it is consumed, what weight remains?", o: ["$25$ kg", "$15$ kg", "$20$ kg", "$30$ kg"], c: 0 },
+    { q: "The area of a rectangle is $20\\frac{1}{4}$ sq cm. If length is $4\\frac{1}{2}$ cm, find width.", o: ["$4\\frac{1}{2}$ cm", "$5$ cm", "$4$ cm", "$5\\frac{1}{4}$ cm"], c: 0 },
+    { q: "Arrange in descending order: $\\frac{2}{3}, \\frac{5}{6}, \\frac{1}{2}$.", o: ["$\\frac{5}{6}, \\frac{2}{3}, \\frac{1}{2}$", "$\\frac{1}{2}, \\frac{2}{3}, \\frac{5}{6}$", "$\\frac{2}{3}, \\frac{5}{6}, \\frac{1}{2}$", "$\\frac{5}{6}, \\frac{1}{2}, \\frac{2}{3}$"], c: 0 },
+    { q: "Multiply $\\frac{4}{7}$ by $14$.", o: ["$8$", "$4$", "$7$", "$10$"], c: 0 },
+    { q: "A string $\\frac{4}{5}$ meters long is cut into $2$ equal parts. Length of each?", o: ["$\\frac{2}{5}$ m", "$\\frac{1}{5}$ m", "$\\frac{4}{10}$ m", "Both A and C"], c: 3 },
+    { q: "Find $\\frac{2}{3}$ of a day in hours.", o: ["$16$ hours", "$12$ hours", "$8$ hours", "$18$ hours"], c: 0 },
+    { q: "What fraction of $1$ kg is $250$ g?", o: ["$\\frac{1}{4}$", "$\\frac{1}{2}$", "$\\frac{1}{5}$", "$\\frac{3}{4}$"], c: 0 },
+    { q: "Convert $\\frac{17}{3}$ into a mixed fraction.", o: ["$5\\frac{2}{3}$", "$5\\frac{1}{3}$", "$6\\frac{1}{3}$", "$4\\frac{2}{3}$"], c: 0 },
+    { q: "Sum of $\\frac{1}{2}$ and $\\frac{1}{4}$ is?", o: ["$\\frac{3}{4}$", "$\\frac{2}{6}$", "$\\frac{1}{6}$", "$1$"], c: 0 },
+    { q: "If $\\frac{4}{5}$ of a pole is $16$ m, what is the total length?", o: ["$20$ m", "$18$ m", "$24$ m", "$12$ m"], c: 0 },
+    { q: "The product of $0$ and $\\frac{7}{9}$ is?", o: ["$0$", "$\\frac{7}{9}$", "$1$", "Undefined"], c: 0 },
+    { q: "A bottle is $\\frac{3}{4}$ full of oil. If $250$ ml is used, it becomes half full. Capacity?", o: ["$1000$ ml", "$500$ ml", "$750$ ml", "$1250$ ml"], c: 0 },
+    { q: "Simplify: $\\frac{2}{5} + \\frac{1}{10} + \\frac{1}{2}$.", o: ["$1$", "$\\frac{4}{10}$", "$\\frac{7}{10}$", "$1\\frac{1}{2}$"], c: 0 },
+    { q: "Subtract: $1\\frac{1}{2} - \\frac{3}{4}$.", o: ["$\\frac{3}{4}$", "$\\frac{1}{2}$", "$\\frac{1}{4}$", "$1$"], c: 0 },
+    { q: "Half of a quarter is?", o: ["$\\frac{1}{8}$", "$\\frac{1}{4}$", "$\\frac{1}{2}$", "$\\frac{1}{16}$"], c: 0 },
+    { q: "A man walks $3\\frac{1}{3}$ km per hour. Distance in $3$ hours?", o: ["$10$ km", "$9$ km", "$11$ km", "$6$ km"], c: 0 },
+    { q: "If $\\frac{1}{x} = \\frac{4}{12}$, find $x$.", o: ["$3$", "$4$", "$12$", "$6$"], c: 0 },
+    { q: "Divide $5$ by $\\frac{1}{5}$.", o: ["$25$", "$1$", "$\\frac{1}{25}$", "$5$"], c: 0 },
+    { q: "Fraction equivalent to $0.75$?", o: ["$\\frac{3}{4}$", "$\\frac{1}{4}$", "$\\frac{1}{2}$", "$\\frac{3}{5}$"], c: 0 },
+    { q: "How many $\\frac{1}{8}$s are in $2$?", o: ["$16$", "$8$", "$4$", "$10$"], c: 0 },
+    { q: "Sum of a fraction and its reciprocal is $2$. The fraction is?", o: ["$1$", "$\\frac{1}{2}$", "$\\frac{3}{2}$", "None"], c: 0 },
+    { q: "Which is greater: $\\frac{2}{3}$ or $\\frac{3}{4}$?", o: ["$\\frac{3}{4}$", "$\\frac{2}{3}$", "Both equal", "Cannot say"], c: 0 },
+    { q: "Numerator of $\\frac{7}{11}$ is?", o: ["$7$", "$11$", "$18$", "$1.57$"], c: 0 },
+    { q: "Simplify $\\frac{100}{400}$.", o: ["$\\frac{1}{4}$", "$\\frac{1}{2}$", "$\\frac{2}{5}$", "$\\frac{1}{10}$"], c: 0 },
+    { q: "A student read $\\frac{2}{5}$ of a book on Monday and $\\frac{1}{5}$ on Tuesday. Fraction remaining?", o: ["$\\frac{2}{5}$", "$\\frac{3}{5}$", "$\\frac{1}{5}$", "$\\frac{4}{5}$"], c: 0 },
+    { q: "A bucket holds $20$ liters. It is $\\frac{4}{5}$ full. Water in bucket?", o: ["$16$ liters", "$15$ liters", "$18$ liters", "$12$ liters"], c: 0 },
+    { q: "What is $\\frac{1}{10}$ of $1000$?", o: ["$100$", "$10$", "$1000$", "$1$"], c: 0 },
+    { q: "Find the product of $\\frac{2}{7}$ and $\\frac{3}{5}$.", o: ["$\\frac{6}{35}$", "$\\frac{5}{12}$", "$\\frac{6}{12}$", "$\\frac{5}{35}$"], c: 0 },
+    { q: "If $\\frac{3}{4}$ of $x$ is $12$, then $\\frac{1}{2}$ of $x$ is?", o: ["$8$", "$16$", "$6$", "$4$"], c: 0 },
+    { q: "Value of $\\frac{1}{2} + \\frac{1}{2} + \\frac{1}{2}$.", o: ["$1\\frac{1}{2}$", "$1$", "$2$", "$\\frac{3}{6}$"], c: 0 },
+    { q: "Which is a unit fraction?", o: ["$\\frac{1}{7}$", "$\\frac{2}{7}$", "$\\frac{7}{1}$", "$\\frac{7}{7}$"], c: 0 }
+];
+
+let cur = 0;
+let userAnswers = new Array(quizData.length).fill(null);
+let viewed = new Array(quizData.length).fill(false);
+let submitted = false;
+let timeLeft = 3000;
+let timer;
+
+function init() {
+    const dots = document.getElementById('nav-dots');
+    for(let i=0; i<50; i++) {
+        dots.innerHTML += `<div class="nav-dot" id="dot-${i}" onclick="jump(${i})">${i+1}</div>`;
+    }
+    loadQ();
+    startTimer();
+}
+
+function toggleSidebar() { document.getElementById('nav-sidebar').classList.toggle('open'); }
+
+function loadQ() {
+    viewed[cur] = true;
+    updateNav();
+    const q = quizData[cur];
+    document.getElementById('question-body').innerHTML = `<div class="question-text">${cur+1}. ${q.q}</div>`;
+    const opts = document.getElementById('options-body');
+    opts.innerHTML = '';
+    
+    q.o.forEach((o, i) => {
+        let classes = 'opt';
+        if (submitted) {
+            classes += ' locked';
+            if (i === q.c) classes += ' is-correct';
+            if (userAnswers[cur] === i && i !== q.c) classes += ' is-wrong';
+        } else {
+            if (userAnswers[cur] === i) classes += ' selected';
+        }
+        opts.innerHTML += `<div class="${classes}" onclick="select(${i})">${o}</div>`;
+    });
+    
+    document.getElementById('prev-btn').disabled = cur === 0;
+    document.getElementById('next-btn').innerHTML = (cur === 49 && !submitted) ? "Submit Exam" : "Next Question →";
+    
+    // Explicit MathJax re-render
+    if (window.MathJax && MathJax.typesetPromise) {
+        MathJax.typesetPromise();
+    }
+}
+
+function select(idx) {
+    if(submitted) return;
+    userAnswers[cur] = idx;
+    loadQ();
+}
+
+function updateNav() {
+    for(let i=0; i<50; i++) {
+        const dot = document.getElementById(`dot-${i}`);
+        dot.classList.remove('active', 'viewed', 'attempted');
+        if(i === cur) dot.classList.add('active');
+        if(userAnswers[i] !== null) dot.classList.add('attempted');
+        else if(viewed[i]) dot.classList.add('viewed');
+    }
+}
+
+function move(dir) {
+    if(cur === 49 && dir === 1 && !submitted) { finish(); return; }
+    cur = (cur + dir + 50) % 50;
+    loadQ();
+}
+
+function jump(i) { cur = i; loadQ(); }
+
+function startTimer() {
+    timer = setInterval(() => {
+        if(submitted) return;
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+        if(timeLeft-- <= 0) finish();
+    }, 1000);
+}
+
+function finish() {
+    submitted = true;
+    clearInterval(timer);
+    document.getElementById('timer').innerText = "DONE";
+    let score = 0;
+    userAnswers.forEach((ans, i) => { if(ans === quizData[i].c) score++; });
+    document.getElementById('exam-status').innerHTML = `<b>Score: ${score}/50</b>`;
+    loadQ();
+}
+
+init();
+</script>
+</body>
+</html>
