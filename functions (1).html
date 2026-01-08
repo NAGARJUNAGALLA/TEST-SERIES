@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0, user-scalable=no">
+    <title>Functions Comprehensive Synopsis</title>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body { font-family: 'Times New Roman', Times, serif; line-height: 1.5; color: #000; max-width: 1000px; margin: auto; padding: 20px; background-color: #fff; }
+        h1 { text-align: center; text-decoration: underline; margin-bottom: 30px; }
+        .note-box { border: 1px solid #000; border-radius: 5px; padding: 15px; margin: 15px 0; background-color: #fff; }
+        .note-title { font-weight: bold; text-align: center; display: block; margin-top: -25px; background: white; width: 80px; margin-left: auto; margin-right: auto; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.95em; }
+        th, td { border: 1px solid #000; padding: 6px; text-align: center; }
+        th { background-color: #f0f0f0; }
+        .section-title { font-weight: bold; margin-top: 20px; display: block; font-style: italic; }
+        ul { list-style-type: none; padding-left: 20px; }
+        li { margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>FUNCTIONS</h1>
+
+    <div class="section-title">1. Function (or) Mapping :</div>
+    <p>Let $X$ and $Y$ be any two non-empty sets and there be correspondence or association between the elements of $X$ and $Y$ such that for every element $x \in X$, there exists a unique element $y \in Y$, written as $y = f(x)$. Then we say that $f$ is a mapping or function from $X$ to $Y$, and is written as $f : X \to Y$ such that $y = f(x), x \in X, y \in Y$.</p>
+
+    <div class="note-box">
+        <span class="note-title">Note</span>
+        The number of functions that can be defined from $A$ to $B$ is $[n(B)]^{n(A)}$.
+    </div>
+
+    <div class="section-title">2. Domain and range of a function :</div>
+    <p>If $f : X \to Y$ be a function, then the set $X$ is said to be the domain of $f$ and range of $f$ is set of all image points in $Y$ under the map $f$.<br>
+    i.e., $f(X) = \{f(x) : f(x) \in Y; x \in X\}$.<br>
+    The set $Y$ is also called the co-domain of $f$. Clearly $f(X) \subseteq Y$.</p>
+
+    <div class="section-title">3. Equality of functions :</div>
+    <p>Two functions $f$ and $g$ are said to be equal iff,<br>
+    i) the domain of $f$ = the domain of $g$<br>
+    ii) $f(x) = g(x) \ \forall x \in \text{domain}$.</p>
+
+    <div class="section-title">4. Logarithmic Function :</div>
+    <p>$\log_b a$ is defined when $a > 0, b > 0$ and $b \neq 1$.</p>
+
+    <div class="section-title">5. Exponential Functions :</div>
+    <p>$a^x$ is defined for all real values of $x$, where $a > 0$.</p>
+
+    <div class="section-title">6. Modulus function (or) Absolute value function :</div>
+    <p>The function $f : R \to R$, is defined as 
+    $$f(x) = |x| = \begin{cases} x, & \text{if } x > 0 \\ 0, & \text{if } x = 0 \\ -x, & \text{if } x < 0 \end{cases}$$
+    is called the absolute value function or modulus function. Its domain is $R$ and its range is $[0, \infty)$.</p>
+    [attachment_0](attachment)
+
+    <div class="note-box">
+        <span class="note-title">Note</span>
+        <strong>Triangle inequalities</strong><br>
+        i) $|x \pm y| \leq |x| + |y|$<br>
+        ii) $|x \pm y| \geq ||x| - |y||$
+    </div>
+
+    <div class="section-title">7. Greatest integer (Step or integral) function :</div>
+    <p>The function $f : R \to R$, is defined as $f(x) = [x]$ is called the greatest integer function, where $[x]$ = integral part of $x$ or greatest integer not greater than $x$ or greatest integer less than or equal to $x$.<br>
+    i.e. $f(x) = n$, where $n \leq x < n+1, n \in I$ (the set of integers).<br>
+    Its domain is $R$ and range is $I$.</p>
+    [attachment_1](attachment)
+
+    <div class="note-box">
+        <span class="note-title">Note</span>
+        i) $[x] \leq x < [x]+1$<br>
+        ii) $[x+y]=[x]+[y]$ if either $x$ (or) $y$ (or) both integers<br>
+        iii) $n \leq x < n+1 \iff [x]=n$<br>
+        iv) $x-1 < [x] \leq x$<br>
+        v) $[[x]] = [x]$<br>
+        vi) $[x]+[-x] = \begin{cases} 0 & \text{if } x \in I \\ -1 & \text{if } x \notin I \end{cases}$
+    </div>
+
+    <div class="section-title">8. Fractional-part function :</div>
+    <p>The function $f : R \to R$ is defined as $f(x) = x - [x]$ (or) $f(x) = \{x\}$, where $\{x\}$ denotes the fractional part of $x$, is called the fractional part function. Its domain is $R$ and range is $[0, 1)$.</p>
+    
+
+    <div class="note-box">
+        <span class="note-title">Note</span>
+        i) If $x$ is an integer, then $x = [x] \implies \{x\} = 0 \implies [\{x\}] = 0$<br>
+        ii) $[\{x\}] = 0$<br>
+        iii) $\{x\} + \{-x\} = \begin{cases} 0, & \text{if } x \in \text{integer} \\ 1, & \text{if } x \notin \text{integer} \end{cases}$
+    </div>
+
+    <div class="section-title">9. Signum function :</div>
+    <p>The function $f : R \to R$ defined as, 
+    $$f(x) = \begin{cases} \frac{|x|}{x} & \text{for } x \neq 0 \\ 0 & \text{for } x = 0 \end{cases}$$
+    is called the signum function. Its domain is $R$ and range is the set $\{-1, 0, 1\}$.</p>
+
+    <div class="section-title">10. Composite Function :</div>
+    <p>Let $f$ and $g$ be two real functions with domain $D_1$ and $D_2$ respectively. If range of $f \subseteq$ domain of $g$, then composite function $(gof)$ is defined by $(gof)(x) = g(f(x)), \forall x \in D_1$.<br>
+    Also, if range of $g \subseteq$ domain of $f$, then composite function $(fog)$ is defined by $(fog)(x) = f(g(x)), \forall x \in D_2$.</p>
+
+    <div class="section-title">11. Odd and Even functions :</div>
+    <p><strong>Odd function :</strong> A function $f(x)$ is said to be odd if $f(-x) = -f(x)$ for every real number $x$ in the domain of $f$.<br>
+    <strong>Even function :</strong> A function $f(x)$ is said to be even if $f(-x) = f(x)$ for every real number $x$ in the domain of $f$.</p>
+
+    <div class="note-box">
+        <span class="note-title">Note</span>
+        i) The graph of an odd function is symmetric about origin and it is placed either in the first and third quadrant or in the second and fourth quadrant.<br>
+        ii) The graph of an even function is symmetric about the y-axis.<br>
+        iii) If a function $f(x)$ is such that $f(a-x) = f(a+x)$ then it is symmetric with respect to the line $x = a$.<br>
+        iv) If a function $f(x)$ is such that $f(a-x) + f(a+x) = 0$ then it is symmetric with respect to the point $(a, 0)$.<br>
+        v) If $f$ and $g$ are functions and $gof$ is defined then:
+        <table>
+            <tr><th>$g$</th><th>$f$</th><th>$gof$</th></tr>
+            <tr><td>even</td><td>even</td><td>even</td></tr>
+            <tr><td>odd</td><td>odd</td><td>odd</td></tr>
+            <tr><td>odd</td><td>even</td><td>even</td></tr>
+            <tr><td>even</td><td>odd</td><td>even</td></tr>
+        </table>
+        vi) To express a given function $f(x)$ as the sum of an even and odd function, we write<br>
+        $f(x) = \frac{1}{2}[f(x) + f(-x)] + \frac{1}{2}[f(x) - f(-x)]$<br>
+        where $\frac{1}{2}[f(x) + f(-x)]$ is an even function and $\frac{1}{2}[f(x) - f(-x)]$ is an odd function.<br>
+        vii) If $f(x)$ is an odd function, then $f'(x)$ is an even function provided $f(x)$ is differentiable on $R$.<br>
+        viii) If $f(x)$ is an even function, then $f'(x)$ is an odd function provided $f(x)$ is differentiable on $R$.
+    </div>
+
+    <div class="section-title">12. Constant Function :</div>
+    <p>A function $f : R \to R$ defined as $f(x) = c, \forall x \in R$, where $c$ is a constant, is called a constant function. Its domain is $R$ and range is singleton set $\{c\}$. The graph of constant function is a straight line parallel to x-axis when $x$ is the independent variable.</p>
+
+    <div class="section-title">13. Identity function :</div>
+    <p>The function $f : R \to R$ defined as $f(x) = x, \forall x \in R$, is called the identity function. Its domain is $R$ and range is also $R$. The graph of the identity function is a straight line passing through origin and inclined at an angle of $45^\circ$ with x-axis.</p>
+
+    <div class="section-title">14. Algebraic Functions :</div>
+    <p>If $f$ and $g$ are real valued functions with domain $A$ and $B$ respectively, then both $f$ and $g$ are defined on $A \cap B$ when $A \cap B \neq \phi$.<br>
+    i) $(f \pm g)(x) = f(x) \pm g(x)$ and $(fg)(x) = f(x)g(x)$.<br>
+    ii) Let $f : A \to R$ and $k$ be a constant function defined on $A$ then $(f + k)(x) = f(x) + k$ and $(kf)(x) = kf(x)$ for all $x \in A$.<br>
+    iii) Let $f : A \to R, g : B \to R, C = \{x \in A \cap B | g(x) \neq 0\} \neq \phi$ then $\frac{f}{g}$ defined on $C$ as $(\frac{f}{g})(x) = \frac{f(x)}{g(x)}$ for all $x \in C$.<br>
+    iv) Let $f : A \to R$ and $n \in N$ then $|f|, f^n$ are defined on $A$ as $|f|(x) = |f(x)|$ and $f^n(x) = (f(x))^n$ for all $x \in A$.<br>
+    v) Let $f : A \to R, C = \{x \in A | f(x) \geq 0\} \neq \phi$, then $\sqrt{f}$ defined on $C$ as $\sqrt{f}(x) = \sqrt{f(x)}$ for all $x \in C$.</p>
+
+    <div class="section-title">15. Functional Equations</div>
+    <table>
+        <tr><th>Equations</th><th>$f(x)$</th></tr>
+        <tr><td>1. $f(x)f(\frac{1}{x}) = 1$</td><td>$\pm x^n$</td></tr>
+        <tr><td>2. $f(x)f(y) = f(xy)$</td><td>$x^n$</td></tr>
+        <tr><td>3. $f(x+y) = f(x) + f(y)$</td><td>$kx$</td></tr>
+        <tr><td>4. $f(x+y) = f(x)f(y)$</td><td>$a^x$</td></tr>
+        <tr><td>5. $f(xy) = f(x) + f(y)$</td><td>$k \log x$</td></tr>
+        <tr><td>6. $f(x) + f(\frac{1}{x}) = f(x)f(\frac{1}{x})$</td><td>$1 \pm x^n$</td></tr>
+    </table>
+
+    <div class="section-title">16. One-one (or) injective function :</div>
+    <p>A function $f : X \to Y$ is said to be one-one or injective if distinct elements of $X$ have distinct images in $Y$.</p>
+
+    <div class="section-title">17. Many-one function :</div>
+    <p>A function $f : X \to Y$ is said to be many-one if there exists atleast two distinct elements in $X$ whose images are same.</p>
+
+    <div class="section-title">18. Working Rule for checking whether the function $f : X \to Y$ is one-one (or) many-one :</div>
+    <ul>
+        <li>* Consider any two points $x_1, x_2 \in X$.</li>
+        <li>* Put $f(x_1) = f(x_2)$ and solve the equation.</li>
+        <li>* If we get $x_1 = x_2$ only, then $f$ is one-one, otherwise it is many-one.</li>
+    </ul>
+
+    <p><strong>Horizontal line test :</strong><br>
+    * If any straight line parallel to x-axis intersects the graph of the function atmost at one point, then the function is one-one, otherwise it is many-one (i.e. it intersects the graph of the function in atleast two points).<br>
+    * All even functions are many-one.</p>
+
+    <div class="note-box">
+        <span class="note-title">Note</span>
+        i) If $X$ and $Y$ are any two finite sets having $m$ and $n$ elements respectively, then the number of one-one functions from $X$ to $Y$ would be $= \begin{cases} ^nP_m, & \text{if } n \geq m \\ 0, & \text{if } n < m \end{cases}$.<br>
+        ii) If $n(A) \leq n(B)$ then the number of many to one functions from $A$ to $B$ is $[n(B)]^{n(A)} - \phantom{.}^{n(B)}P_{n(A)}$.
+    </div>
+
+    <div class="section-title">19. Onto (or) surjective function :</div>
+    <p>A function $f : X \to Y$ is said to be onto or surjective if every element of $Y$ is the image of some element of $X$ under the map $f$.<br>
+    A function $f : X \to Y$ is an into function if it is not an onto function.</p>
+
+    <div class="note-box">
+        <span class="note-title">Note</span>
+        i) If $X$ and $Y$ are any two finite sets having $m$ and $n$ elements respectively, where $1 \leq n \leq m$, then the number of onto functions from $X$ to $Y$ is given by $\sum_{r=1}^n (-1)^{n-r} \phantom{.}^nC_r r^m$ (or) $^nC_0 n^m - \phantom{.}^nC_1(n-1)^m + \phantom{.}^nC_2(n-2)^m - \phantom{.}^nC_3(n-3)^m + \dots$.<br>
+        ii) The number of into functions from $A$ to $B$ is given by $^nC_1(n-1)^m - \phantom{.}^nC_2(n-2)^m + \phantom{.}^nC_3(n-3)^m - \dots$.<br>
+        iii) If $n(A) \geq n(B)$ and $n(B) = 2$ then the number of onto functions from $A$ to $B$ are $2^{n(A)} - 2$.
+    </div>
+
+    <div class="section-title">20. Working Rule for checking whether the function $f : X \to Y$ is onto or into :</div>
+    <ul>
+        <li>i) Find the range of the function $f$.</li>
+        <li>ii) If range of $f = Y$, then $f$ is onto, otherwise it is into.</li>
+    </ul>
+
+    <div class="section-title">21. Bijective function :</div>
+    <p>A function $f : X \to Y$ is said to be bijective, if $f$ is both one-one and onto.</p>
+
+    <div class="note-box">
+        <span class="note-title">Note</span>
+        If $X$ and $Y$ are any two finite sets having the same number of elements, say $n$, then the number of bijective functions from $X$ to $Y$ is $n!$.
+    </div>
+
+    <div class="section-title">22. Some useful results :</div>
+    <p>Let $f : X \to Y$ and $g : Y \to Z$<br>
+    i) If both $f$ and $g$ are one-one, then $gof$ is also one-one.<br>
+    ii) If both $f$ and $g$ are onto, then $gof$ is also onto.<br>
+    iii) If $gof$ is one-one, then $f$ is one-one but $g$ may not be one-one.<br>
+    iv) If $gof$ is onto, then $g$ is onto but $f$ may not be onto.<br>
+    v) If $f$ and $g$ are bijective, then $gof$ is also bijective.<br>
+    vi) It may happen that $gof$ may exist and $fog$ may not exist. Moreover, even if both $gof$ and $fog$ exist, they may not be equal.</p>
+
+    <div class="section-title">23. Inverse Function :</div>
+    <p>If the function $f : X \to Y$ is both one-one and onto, then we define inverse function $f^{-1} : Y \to X$ by the rule $y = f(x) \iff f^{-1}(y) = x, \forall x \in X, \forall y \in Y$.</p>
+
+    <div class="section-title">24. Working Rule to find the Inverse of a function :</div>
+    <p>Let $f : X \to Y$ be a bijective function.<br>
+    * Put $f(x) = y$.<br>
+    * Solve the equation $y = f(x)$ to obtain $x$ in terms of $y$.<br>
+    * Interchange $x$ and $y$ to obtain the inverse of $f$.</p>
+
+    <div class="note-box">
+        <span class="note-title">Note</span>
+        i) The graph of $y = f(x)$ and its inverse written in the form $y = g(x)$ are symmetrical about the line $y = x$.<br>
+        ii) The graph of $y = f(x)$ and $y = f^{-1}(x)$ if intersects then meet on the line $y = x$ only. Hence, the solution of $f(x) = f^{-1}(x)$ are also the solution of $f(x) = x$.<br>
+        iii) If $f : A \to B$ and $g : B \to C$ are two bijections, then $gof : A \to C$ is bijection and $(gof)^{-1} = f^{-1} \circ g^{-1}$.
+    </div>
+
+    <div class="section-title">25. Working Rules for finding the domain of a function :</div>
+    <p><strong>Algebraic Functions :</strong><br>
+    i) Denominator should be non-zero.<br>
+    ii) Expression under the even root should be non-negative i.e., $\geq 0$.<br>
+    <strong>Trigonometric Functions :</strong><br>
+    i) $\sin x$ and $\cos x$ are defined for all real values of $x$.<br>
+    ii) $\tan x$ and $\sec x$ are defined for all real values of $x$ except $x = (2n+1)\frac{\pi}{2}$, where $n \in I$.<br>
+    iii) $\cot x$ and $\text{cosec } x$ are defined for all real values of $x$ except $x = n\pi$, where $n \in I$.</p>
+
+    <p><strong>Inverse Trigonometric Functions :</strong><br>
+    i) $\sin^{-1} x$ and $\cos^{-1} x$ are defined for $-1 \leq x \leq 1$.<br>
+    ii) $\tan^{-1} x$ and $\cot^{-1} x$ are defined for all $x \in R$.<br>
+    iii) $\sec^{-1} x$ and $\text{cosec}^{-1} x$ are defined for $x \leq -1$ or $x \geq 1$.</p>
+
+    <div class="section-title">26. Rules for solving problems on domain of a function :</div>
+    <ul>
+        <li>i) $(x-a)(x-b) > 0 \implies x < a$ or $x > b$, for $a < b$.</li>
+        <li>ii) $(x-a)(x-b) < 0 \implies a < x < b$ for $a < b$.</li>
+        <li>iii) $|x| < a \implies -a < x < a$.</li>
+        <li>iv) $|x| > a \implies x < -a$ or $x > a$.</li>
+        <li>v) $\log_b a > k \implies \begin{cases} a > b^k, \text{ if } b > 1 \\ a < b^k, \text{ if } b < 1 \end{cases}$.</li>
+        <li>vi) $\sqrt{x^2} = |x|$.</li>
+        <li>vii) $\sqrt[n]{x^n} = |x|$, if $n$ is even and $\sqrt[n]{x^n} = x$, if $n$ is odd.</li>
+        <li>viii) Domain of $\frac{1}{\sqrt{f(x)}}$ is $\{x / f(x) > 0\}$.</li>
+        <li>ix) Domain of $\log f(x)$ is $\{x / f(x) > 0\}$.</li>
+        <li>x) Domain of $1/\log f(x)$ is $\{x / f(x) > 0 \text{ and } f(x) \neq 1\}$.</li>
+    </ul>
+
+    <div class="section-title">27. Working Rules for finding the range of a function $y = f(x)$ :</div>
+    <ul>
+        <li>i) Find the domain of the function $y = f(x)$.</li>
+        <li>ii) If the domain is a set containing finite number of elements then find the corresponding images under the given function and the set of all images so obtained is the range.</li>
+        <li>iii) If the domain is either $R$ or a subset of $R$ then solve the equation $y = f(x)$ and find $x$ in terms of $y$ to get $x = g(y)$, find the values of $y$ for which $y$ is real and defined and the set of values of $y$ so obtained constitutes the range of $f$. Note that if finite number of values of $x$ are excluded from the domain, find the values of $y$ for these values of $x$ and exclude these values of $y$ from the range of $f$ found earlier.</li>
+        <li>iv) In case of monotonic functions find the least and greatest value of $y$ for values of $x$ in the domain. If $a$ is the least value and $b$ the greatest value of $y$ then range $(f) = [a, b]$.</li>
+    </ul>
+
+    <div class="section-title">28. THE DOMAINS AND THE RANGES OF SOME STANDARD FUNCTIONS</div>
+    <p><strong>Algebraic Functions</strong></p>
+    <table>
+        <tr><th>FUNCTION</th><th>DOMAIN</th><th>RANGE</th></tr>
+        <tr><td>$\log_a x$</td><td>$(0, \infty)$</td><td>$R$</td></tr>
+        <tr><td>$a^x$</td><td>$R$</td><td>$(0, \infty)$</td></tr>
+        <tr><td>$[x]$</td><td>$R$</td><td>$Z$</td></tr>
+        <tr><td>$\{x\} = x - [x]$</td><td>$R$</td><td>$[0, 1)$</td></tr>
+        <tr><td>$|x|$</td><td>$R$</td><td>$[0, \infty)$</td></tr>
+        <tr><td>$\sqrt{x}$</td><td>$[0, \infty)$</td><td>$[0, \infty)$</td></tr>
+        <tr><td>$x + \frac{1}{x}$</td><td>$R - \{0\}$</td><td>$(-\infty, -2] \cup [2, \infty)$</td></tr>
+    </table>
+
+    <p><strong>Trigonometric Functions</strong></p>
+    <table>
+        <tr><th>FUNCTION</th><th>DOMAIN</th><th>RANGE</th></tr>
+        <tr><td>$\sin x$</td><td>$R$</td><td>$[-1, 1]$</td></tr>
+        <tr><td>$\cos x$</td><td>$R$</td><td>$[-1, 1]$</td></tr>
+        <tr><td>$\tan x$</td><td>$R - \{(2n+1)\frac{\pi}{2} / n \in Z\}$</td><td>$R$</td></tr>
+        <tr><td>$\cot x$</td><td>$R - \{n\pi / n \in Z\}$</td><td>$R$</td></tr>
+        <tr><td>$\sec x$</td><td>$R - \{(2n+1)\frac{\pi}{2} / n \in Z\}$</td><td>$(-\infty, -1] \cup [1, \infty)$</td></tr>
+        <tr><td>$\text{cosec } x$</td><td>$R - \{n\pi / n \in Z\}$</td><td>$(-\infty, -1] \cup [1, \infty)$</td></tr>
+    </table>
+    [attachment_2](attachment)
+
+    <p><strong>Inverse Trigonometric Functions</strong></p>
+    <table>
+        <tr><th>FUNCTION</th><th>DOMAIN</th><th>RANGE</th></tr>
+        <tr><td>$\sin^{-1} x$</td><td>$[-1, 1]$</td><td>$[-\frac{\pi}{2}, \frac{\pi}{2}]$</td></tr>
+        <tr><td>$\cos^{-1} x$</td><td>$[-1, 1]$</td><td>$[0, \pi]$</td></tr>
+        <tr><td>$\tan^{-1} x$</td><td>$R$</td><td>$(-\frac{\pi}{2}, \frac{\pi}{2})$</td></tr>
+        <tr><td>$\cot^{-1} x$</td><td>$R$</td><td>$(0, \pi)$</td></tr>
+        <tr><td>$\sec^{-1} x$</td><td>$(-\infty, -1] \cup [1, \infty)$</td><td>$[0, \pi] - \{\pi/2\}$</td></tr>
+        <tr><td>$\text{cosec}^{-1} x$</td><td>$(-\infty, -1] \cup [1, \infty)$</td><td>$[-\frac{\pi}{2}, \frac{\pi}{2}] - \{0\}$</td></tr>
+    </table>
+
+    <p><strong>Hyperbolic Functions</strong></p>
+    <table>
+        <tr><th>FUNCTION</th><th>DOMAIN</th><th>RANGE</th></tr>
+        <tr><td>$\sinh x$</td><td>$R$</td><td>$R$</td></tr>
+        <tr><td>$\cosh x$</td><td>$R$</td><td>$[1, \infty)$</td></tr>
+        <tr><td>$\tanh x$</td><td>$R$</td><td>$(-1, 1)$</td></tr>
+        <tr><td>$\coth x$</td><td>$R - \{0\}$</td><td>$(-\infty, -1] \cup (1, \infty)$</td></tr>
+        <tr><td>$\text{sech } x$</td><td>$R$</td><td>$(0, 1]$</td></tr>
+        <tr><td>$\text{cosech } x$</td><td>$R - \{0\}$</td><td>$R - \{0\}$</td></tr>
+    </table>
+
+    <p><strong>Inverse Hyperbolic Functions</strong></p>
+    <table>
+        <tr><th>FUNCTION</th><th>DOMAIN</th><th>RANGE</th></tr>
+        <tr><td>$\sinh^{-1} x$</td><td>$R$</td><td>$R$</td></tr>
+        <tr><td>$\cosh^{-1} x$</td><td>$[1, \infty)$</td><td>$[0, \infty)$</td></tr>
+        <tr><td>$\tanh^{-1} x$</td><td>$(-1, 1)$</td><td>$R$</td></tr>
+        <tr><td>$\coth^{-1} x$</td><td>$(-\infty, -1) \cup (1, \infty)$</td><td>$R - \{0\}$</td></tr>
+        <tr><td>$\text{sech}^{-1} x$</td><td>$(0, 1]$</td><td>$[0, \infty)$</td></tr>
+        <tr><td>$\text{cosech}^{-1} x$</td><td>$R - \{0\}$</td><td>$R - \{0\}$</td></tr>
+    </table>
+
+</body>
+</html>
