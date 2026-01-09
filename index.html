@@ -3,596 +3,267 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Portal</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>LEAP Login - Dynamic Captcha</title>
     <style>
         :root {
-            --primary-bg: #f8fafc;
-            --card-bg: #eefafc;
-            --teal-accent: #007c7c;
-            --text-dark: #333;
-            --border-radius: 10px;
-            --header-height: 70px;
+            --bg-yellow: #fdf6d8;
+            --chalkboard-green: #3d7054;
+            --grid-line: rgba(255, 255, 255, 0.15);
+            --leap-green: #4b5e29;
+            --btn-pink: #f83061;
+            --input-gold: #a3a452;
+            --error-red: #d32f2f;
         }
 
-        * {
-            box-sizing: border-box;
+        body, html {
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-yellow);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            overflow: hidden;
         }
 
-        body {
-            background-color: #fff;
-            /* Prevent scrolling on login screen */
-            overflow-x: hidden; 
+        .container {
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* ============================
-           LOGIN SCREEN STYLES
-           ============================ */
-        #login-view {
-            position: fixed;
-            top: 0;
+        .header {
+            text-align: center;
+            padding: 40px 20px 20px 20px;
+            background-color: var(--bg-yellow);
+        }
+
+        .logo-title {
+            font-size: 48px;
+            font-weight: 900;
+            color: var(--leap-green);
+            margin: 0;
+        }
+
+        .bottom-section {
+            flex-grow: 1;
+            position: relative;
+            background-color: var(--chalkboard-green);
+            background-image: 
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 30px 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .bottom-section::before {
+            content: "";
+            position: absolute;
+            top: -24px;
             left: 0;
             width: 100%;
-            height: 100vh;
-            background: linear-gradient(135deg, #e0f7fa 0%, #eef6fc 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999; /* Highest priority */
-            transition: opacity 0.5s ease;
+            height: 25px;
+            background-color: var(--chalkboard-green);
+            clip-path: polygon(0% 100%, 5% 20%, 10% 80%, 15% 10%, 25% 90%, 35% 20%, 45% 70%, 55% 10%, 65% 85%, 75% 15%, 85% 95%, 100% 20%, 100% 100%);
         }
 
         .login-card {
             background: white;
-            padding: 40px 30px;
-            width: 90%;
-            max-width: 400px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-
-        .login-logo {
-            width: 60px;
-            height: 60px;
-            background: var(--teal-accent);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            margin: 0 auto 20px;
-        }
-
-        .login-title {
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 1.5rem;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .input-group input {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e1e5ea;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
+            padding: 40px 25px 30px 35px;
+            border-radius: 6px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 10;
         }
 
-        .input-group input:focus {
-            border-color: var(--teal-accent);
-            outline: none;
+        .login-card::after {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 20px;
+            bottom: 20px;
+            width: 12px;
+            background-image: radial-gradient(#ddd 4px, transparent 4px);
+            background-size: 100% 40px;
         }
 
-        /* Captcha Styles */
-        .captcha-container {
+        .form-group { margin-bottom: 18px; }
+        
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .input-container {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
             align-items: center;
+            border: 2px solid var(--input-gold);
+            padding: 10px 12px;
+            border-radius: 4px;
+        }
+
+        .input-container input {
+            border: none;
+            outline: none;
+            width: 100%;
+            margin-left: 10px;
+            font-size: 16px;
+        }
+
+        .captcha-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .captcha-box {
-            flex: 1;
-            background-color: #f0f2f5;
-            padding: 10px;
-            border-radius: 8px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1.5rem;
+            background: #f0f0f0;
+            padding: 8px 12px;
             font-weight: bold;
-            letter-spacing: 5px;
-            color: #444;
-            text-decoration: line-through; 
+            letter-spacing: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            border: 1px dashed #999;
+            color: #222;
             user-select: none;
-            text-align: center;
-        }
-
-        .refresh-btn {
-            background: none;
-            border: none;
             cursor: pointer;
-            color: var(--teal-accent);
-            font-size: 1.2rem;
-            padding: 5px;
         }
 
-        .btn-login {
+        #error-message {
+            color: var(--error-red);
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: 12px;
+            text-align: center;
+            display: none;
+        }
+
+        .login-btn {
+            background-color: var(--btn-pink);
+            color: white;
             width: 100%;
             padding: 14px;
-            background-color: var(--teal-accent);
-            color: white;
             border: none;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 18px;
             font-weight: bold;
             cursor: pointer;
-            transition: background 0.3s;
+            margin-top: 10px;
         }
 
-        .btn-login:hover {
-            background-color: #006666;
-        }
-
-        .error-msg {
-            color: #e53e3e;
-            font-size: 0.85rem;
-            margin-top: 15px;
-            min-height: 20px;
-        }
-
-        /* ============================
-           DASHBOARD STYLES
-           ============================ */
-        #dashboard-view {
-            display: none; /* Hidden by default */
-            padding-top: var(--header-height);
-        }
-
-        /* Fixed Header */
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: var(--header-height);
-            z-index: 1000;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            border-bottom: 2px solid #eee;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        
-        .logo-area {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: bold;
-            color: #444;
-        }
-
-        .logo-img {
-            width: 40px;
-            height: 40px;
-            background: var(--teal-accent);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-        }
-
-        .user-profile {
-            font-size: 0.9rem;
-            color: #666;
-        }
-
-        .alert-bar {
-            background-color: #e3f2fd;
-            color: #0d47a1;
-            padding: 10px 20px;
-            font-size: 0.9rem;
-            text-align: center;
-            border-bottom: 1px solid #bbdefb;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        h2.dashboard-title {
-            color: #4a5568;
-            margin-bottom: 25px;
-            font-size: 1.6rem;
-        }
-
-        /* Icon Grid */
-        .icon-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-            gap: 15px;
-            margin-bottom: 40px;
-        }
-
-        .icon-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            cursor: pointer;
-            padding: 15px 10px;
-            border-radius: var(--border-radius);
-            transition: all 0.2s;
-            border: 1px solid transparent;
-        }
-
-        .icon-item:hover { background-color: #f0f4f8; }
-        .icon-item.active {
-            background: linear-gradient(to bottom, #dbeafe, #fff);
-            border: 1px solid #bfdbfe;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
-        .icon-box {
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            margin-bottom: 10px;
-        }
-        
-        .math-color { color: #e53e3e; }
-        .phys-color { color: #3182ce; }
-        .chem-color { color: #d69e2e; }
-        .bio-color  { color: #38a169; }
-        .mock-color { color: #805ad5; }
-        .res-color  { color: #007c7c; }
-
-        .icon-label {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-dark);
-        }
-
-        /* Content Sections */
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .tab-content.active { display: block; }
-
-        .section-group { margin-bottom: 40px; }
-
-        .section-header {
-            font-size: 1.3rem;
-            color: #2d3748;
-            border-bottom: 3px solid #b2f5ea;
-            display: inline-block;
-            margin-bottom: 20px;
-            padding-bottom: 5px;
-        }
-
-        /* Cards Container - LEFT ALIGNED */
-        .cards-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: flex-start; 
-        }
-
-        /* Card Styling */
-        a.card {
-            background-color: var(--card-bg);
-            border-radius: var(--border-radius);
-            width: 170px;
-            height: 110px;
-            position: relative;
-            padding: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: transform 0.2s, box-shadow 0.2s;
+        .user-manual-link {
+            display: block;
+            text-align: right;
+            margin-top: 25px;
+            color: #b00020;
             text-decoration: none;
-            color: inherit;
-            border: 1px solid transparent;
+            font-weight: bold;
+            font-size: 14px;
         }
 
-        a.card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 15px rgba(0,124,124,0.15);
-            border-color: #b2f5ea;
-        }
-
-        .card-text {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #2c3e50;
-            line-height: 1.3;
-            z-index: 1;
-        }
-        
-        .card-subtext {
-            font-size: 0.75rem;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        .card-arrow {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            background-color: var(--teal-accent);
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-top-left-radius: 15px;
-            border-bottom-right-radius: var(--border-radius);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: width 0.2s;
-        }
-        
-        a.card:hover .card-arrow { width: 45px; background-color: #006666; }
-
-        @media (max-width: 600px) {
-            .icon-grid { grid-template-columns: repeat(3, 1fr); }
-            a.card { width: 160px; }
+        .version {
+            text-align: center;
+            color: #e2e2a5;
+            font-weight: bold;
+            margin-top: 30px;
+            font-size: 13px;
         }
     </style>
 </head>
-<body>
+<body onload="generateCaptcha()">
 
-    <div id="login-view">
+<div class="container">
+    <div class="header">
+        <h1 class="logo-title">LEAP</h1>
+        <div style="font-weight: bold; font-size: 18px;">Learning Excellence in<br>Andhra Pradesh</div>
+        <p style="margin-top: 15px; font-weight: 600; font-size: 14px; color: #555;">School Education Department</p>
+    </div>
+
+    <div class="bottom-section">
         <div class="login-card">
-            <div class="login-logo"><i class="fas fa-graduation-cap"></i></div>
-            <h2 class="login-title">Student Login</h2>
-            
-            <div class="input-group">
+            <div class="form-group">
                 <label>Mobile Number</label>
-                <input type="tel" id="mobile-input" placeholder="Enter your 10 digit number" maxlength="10">
-            </div>
-
-            <div class="input-group">
-                <label>Enter Captcha</label>
-                <div class="captcha-container">
-                    <div class="captcha-box" id="captcha-display">------</div>
-                    <button class="refresh-btn" onclick="generateCaptcha()" title="Refresh Captcha">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
+                <div class="input-container">
+                    <span>📱</span>
+                    <input type="tel" id="mobile" placeholder="Enter Mobile Number" maxlength="10" oninput="clearError()">
                 </div>
-                <input type="text" id="captcha-input" placeholder="Enter 6 digits" maxlength="6">
             </div>
 
-            <button class="btn-login" onclick="validateLogin()">Login</button>
-            <p class="error-msg" id="login-error"></p>
+            <div class="form-group">
+                <label>Captcha</label>
+                <div class="captcha-wrapper">
+                    <div class="input-container" style="flex: 1;">
+                        <span>🛡️</span>
+                        <input type="text" id="captchaInput" placeholder="Captcha" oninput="clearError()">
+                    </div>
+                    <div class="captcha-box" id="captchaDisplay" title="Click to refresh" onclick="generateCaptcha()"></div>
+                </div>
+            </div>
+
+            <button class="login-btn" onclick="validateLogin()">LOGIN</button>
             
-            <p style="margin-top:20px; font-size: 0.8rem; color:#888;">
-                Allowed: 9876543210, 1234567890
-            </p>
+            <div id="error-message">Invalid Mobile Number or Captcha!</div>
+
+            <a href="#" class="user-manual-link">User Manual</a>
+
+            <div class="version">v3.5.0</div>
         </div>
     </div>
+</div>
 
-    <div id="dashboard-view">
+<script>
+    let currentCaptcha = "";
+
+    function generateCaptcha() {
+        const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // Removed similar looking I, O
+        const digits = "23456789"; // Removed 0 and 1
         
-        <header>
-            <div class="logo-area">
-                <div class="logo-img"><i class="fas fa-graduation-cap"></i></div>
-                <div>
-                    <div>JCV RANKER'S PORTAL</div>
-                    <div style="font-size: 0.7rem; color: #888;">Exam Preparation</div>
-                </div>
-            </div>
-            <div class="user-profile">
-                <i class="fas fa-user-circle"></i> <span id="user-mobile-display">Student</span>
-            </div>
-        </header>
-
-        <div class="alert-bar">
-            <i class="fas fa-bell"></i> <strong>New:</strong> Grand Mock Test #5 is live now! <a href="#">Click to start</a>.
-        </div>
-
-        <div class="container">
-            <h2 class="dashboard-title">Select Subject</h2>
-
-            <div class="icon-grid">
-                <div class="icon-item active" onclick="openTab('math', this)">
-                    <div class="icon-box math-color"><i class="fas fa-calculator"></i></div>
-                    <div class="icon-label">Mathematics</div>
-                </div>
-                <div class="icon-item" onclick="openTab('physics', this)">
-                    <div class="icon-box phys-color"><i class="fas fa-atom"></i></div>
-                    <div class="icon-label">Physics</div>
-                </div>
-                <div class="icon-item" onclick="openTab('chemistry', this)">
-                    <div class="icon-box chem-color"><i class="fas fa-flask"></i></div>
-                    <div class="icon-label">Chemistry</div>
-                </div>
-                <div class="icon-item" onclick="openTab('biology', this)">
-                    <div class="icon-box bio-color"><i class="fas fa-dna"></i></div>
-                    <div class="icon-label">Biology</div>
-                </div>
-                <div class="icon-item" onclick="openTab('mock', this)">
-                    <div class="icon-box mock-color"><i class="fas fa-clipboard-list"></i></div>
-                    <div class="icon-label">Grand Tests</div>
-                </div>
-                <div class="icon-item" onclick="openTab('analytics', this)">
-                    <div class="icon-box res-color"><i class="fas fa-chart-pie"></i></div>
-                    <div class="icon-label">Results</div>
-                </div>
-            </div>
-
-            <div id="math" class="tab-content active">
-                <div class="section-group">
-                    <h3 class="section-header">Arithmetic</h3>
-                    <div class="cards-container">
-                        <a href="ratios.html" class="card">
-                            <div class="card-text">Ratios and Proportion</div>
-                            <div class="card-subtext">25 MCQs</div>
-                            <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
-                        </a>
-                        <a href="functionsnotes.html" class="card">
-                            <div class="card-text">Functions</div>
-                            <div class="card-subtext">30 MCQs</div>
-                            <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
-                        </a>
-                        <a href="profitandloss.html" class="card">
-                            <div class="card-text">Profit & Loss</div>
-                            <div class="card-subtext">30 MCQs</div>
-                            <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
-                        </a>
-                        <a href="tests/integration.html" class="card">
-                            <div class="card-text">Discount</div>
-                            <div class="card-subtext">30 MCQs</div>
-                            <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
-                        </a>
-                        <a href="tests/integration.html" class="card">
-                            <div class="card-text">Simple Interest</div>
-                            <div class="card-subtext">30 MCQs</div>
-                            <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
-                        </a>
-                        <a href="tests/integration.html" class="card">
-                            <div class="card-text">Compound Interest</div>
-                            <div class="card-subtext">30 MCQs</div>
-                            <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
-                        </a>
-                    </div>
-                </div>
-                <div class="section-group">
-                    <h3 class="section-header">Algebra Series</h3>
-                    <div class="cards-container">
-                        <a href="tests/matrices.html" class="card">
-                            <div class="card-text">Matrices &<br>Determinants</div>
-                            <div class="card-subtext">20 MCQs</div>
-                            <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <div id="physics" class="tab-content">
-                <div class="section-group">
-                    <h3 class="section-header">Mechanics</h3>
-                    <div class="cards-container">
-                        <a href="tests/kinematics.html" class="card">
-                            <div class="card-text">Kinematics<br>1D & 2D</div>
-                            <div class="card-subtext">30 MCQs</div>
-                            <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
-                        </a>
-                        <a href="tests/nlm.html" class="card">
-                            <div class="card-text">Newton's Laws<br>of Motion</div>
-                            <div class="card-subtext">25 MCQs</div>
-                            <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="chemistry" class="tab-content"><div class="section-group"><h3 class="section-header">Chemistry</h3><div class="cards-container"><a href="#" class="card"><div class="card-text">Mole Concept</div><div class="card-arrow"><i class="fas fa-arrow-right"></i></div></a></div></div></div>
-            <div id="biology" class="tab-content"><div class="section-group"><h3 class="section-header">Biology</h3><div class="cards-container"><a href="#" class="card"><div class="card-text">Cell Biology</div><div class="card-arrow"><i class="fas fa-arrow-right"></i></div></a></div></div></div>
-            <div id="mock" class="tab-content"><div class="section-group"><h3 class="section-header">Mocks</h3><div class="cards-container"><a href="#" class="card"><div class="card-text">Grand Test 1</div><div class="card-arrow"><i class="fas fa-arrow-right"></i></div></a></div></div></div>
-            <div id="analytics" class="tab-content"><div class="section-group"><h3 class="section-header">Results</h3><p>No results yet.</p></div></div>
-
-        </div>
-    </div>
-
-    <script>
-        const ALLOWED_USERS = ["9876543210", "1234567890", "9988776655"];
-        let generatedCaptchaVal = "";
-
-        // --- 1. CAPTCHA GENERATOR ---
-        function generateCaptcha() {
-            generatedCaptchaVal = Math.floor(100000 + Math.random() * 900000).toString();
-            document.getElementById('captcha-display').innerText = generatedCaptchaVal;
-            document.getElementById('captcha-input').value = "";
-            document.getElementById('login-error').innerText = "";
+        let captchaArr = [];
+        
+        // Add 3 random letters
+        for(let i=0; i<3; i++) {
+            captchaArr.push(letters.charAt(Math.floor(Math.random() * letters.length)));
         }
-
-        window.onload = function() {
-            generateCaptcha();
+        // Add 3 random digits
+        for(let i=0; i<3; i++) {
+            captchaArr.push(digits.charAt(Math.floor(Math.random() * digits.length)));
         }
+        
+        // Shuffle the array to mix letters and digits
+        captchaArr.sort(() => Math.random() - 0.5);
+        
+        currentCaptcha = captchaArr.join('');
+        document.getElementById('captchaDisplay').innerText = currentCaptcha;
+    }
 
-        // --- 2. LOGIN VALIDATION & BACK BUTTON TRAP ---
-        function validateLogin() {
-            const mobileInput = document.getElementById('mobile-input').value.trim();
-            const captchaInput = document.getElementById('captcha-input').value.trim();
-            const errorMsg = document.getElementById('login-error');
+    function validateLogin() {
+        const mobile = document.getElementById('mobile').value;
+        const userInput = document.getElementById('captchaInput').value;
+        const errorDiv = document.getElementById('error-message');
 
-            if (captchaInput !== generatedCaptchaVal) {
-                errorMsg.innerText = "Incorrect Captcha. Please try again.";
-                generateCaptcha();
-                return;
-            }
-
-            if (!ALLOWED_USERS.includes(mobileInput)) {
-                errorMsg.innerText = "Mobile number not found in our records.";
-                generateCaptcha();
-                return;
-            }
-
-            // SUCCESS: Switch Views
-            document.getElementById('login-view').style.display = 'none';
-            document.getElementById('dashboard-view').style.display = 'block';
-            document.getElementById('user-mobile-display').innerText = mobileInput;
-
-            // --- IMPORTANT: PREVENT BACK BUTTON NAVIGATION ---
-            // 1. Push a new state to the history stack
-            window.history.pushState('dashboard', 'Student Dashboard', window.location.href);
-
-            // 2. Listen for the 'popstate' event (which fires when Back is clicked)
-            window.onpopstate = function(event) {
-                // 3. Immediately push the state again to keep them on the current page
-                window.history.pushState('dashboard', 'Student Dashboard', window.location.href);
-                // Ensure dashboard stays visible
-                document.getElementById('login-view').style.display = 'none';
-                document.getElementById('dashboard-view').style.display = 'block';
-            };
+        // Logic: Valid mobile is 9876543210
+        if (mobile === "9876543210" && userInput.toUpperCase() === currentCaptcha) {
+            errorDiv.style.display = 'none';
+            window.location.href = "dashboard.html"; 
+        } else {
+            errorDiv.style.display = 'block';
+            generateCaptcha(); // Refresh captcha on fail
+            document.getElementById('captchaInput').value = "";
         }
+    }
 
-        // --- 3. DASHBOARD TAB LOGIC ---
-        function openTab(tabId, element) {
-            const contents = document.getElementsByClassName('tab-content');
-            for (let i = 0; i < contents.length; i++) {
-                contents[i].classList.remove('active');
-            }
-            const icons = document.getElementsByClassName('icon-item');
-            for (let i = 0; i < icons.length; i++) {
-                icons[i].classList.remove('active');
-            }
-            const target = document.getElementById(tabId);
-            if(target) target.classList.add('active');
-            element.classList.add('active');
-        }
-    </script>
+    function clearError() {
+        document.getElementById('error-message').style.display = 'none';
+    }
+</script>
+
 </body>
 </html>
