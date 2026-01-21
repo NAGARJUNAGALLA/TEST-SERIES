@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class XI Trigonometry Quiz</title>
+    
+    <script>
+    window.MathJax = {
+      options: {
+        enableMenu: false, // Disables the long-press popup menu
+      },
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      startup: {
+        pageReady: () => {
+          return MathJax.startup.defaultPageReady();
+        }
+      }
+    };
+    </script>
+    
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root {
+            --primary: #511696;
+            --secondary: #7B61FF;
+            --yellow: #FFEE58;
+            --bg-color: #f5f5f5;
+            --correct: #4CAF50;
+            --wrong: #F44336;
+            --blue-nav: #2196F3;
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; padding-bottom: 80px; background: var(--bg-color); user-select: none; }
+
+        /* HEADER */
+        header {
+            background: var(--primary); color: white; padding: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .timer-badge { background: rgba(255,255,255,0.25); padding: 5px 12px; border-radius: 6px; font-weight: bold; }
+        .hamburger { font-size: 1.5rem; background: none; border: none; color: white; cursor: pointer; }
+
+        /* NAVIGATION DRAWER */
+        #nav-drawer {
+            position: fixed; top: 60px; right: -320px; width: 300px; height: 100%;
+            background: white; box-shadow: -4px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease-in-out; z-index: 99; padding: 20px; overflow-y: auto;
+        }
+        #nav-drawer.open { right: 0; }
+        
+        .nav-legend { font-size: 0.85rem; margin-bottom: 15px; display: flex; gap: 10px; justify-content: center;}
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+        .nav-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        .nav-item {
+            width: 40px; height: 40px; border-radius: 8px; border: 1px solid #e0e0e0;
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: 0.2s;
+        }
+        .nav-item:hover { transform: scale(1.05); }
+        .nav-item.current { background: var(--blue-nav); color: white; border-color: var(--blue-nav); }
+        .nav-item.attempted { background: var(--correct); color: white; border-color: var(--correct); }
+        .nav-item.viewed-unanswered { background: var(--wrong); color: white; border-color: var(--wrong); }
+
+        /* MAIN QUIZ CONTAINER */
+        .container { padding: 20px; max-width: 800px; margin: 0 auto; background: white; min-height: 80vh; }
+        
+        .question-card { margin-top: 10px; }
+        .question-text { 
+            font-size: 1.2rem; font-weight: 600; margin-bottom: 30px; 
+            color: #222; line-height: 1.6;
+        }
+
+        .options-list { display: flex; flex-direction: column; gap: 15px; }
+
+        .option-card {
+            display: flex; align-items: center; border: 1px solid #ddd;
+            border-radius: 12px; padding: 12px; cursor: pointer; 
+            transition: all 0.2s; background: white;
+        }
+        .option-card:hover { background-color: #f8f9fa; border-color: #bbb; }
+        
+        .option-badge {
+            background-color: var(--yellow); color: black; font-weight: bold;
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; 
+            margin-right: 15px; flex-shrink: 0; font-size: 0.9rem;
+        }
+        .option-text { font-size: 1.05rem; color: #444; width: 100%; pointer-events: none; }
+
+        /* SELECTION & RESULTS */
+        .option-card.selected { border: 2px solid var(--primary); background-color: #f3e5f5; }
+        
+        .option-card.correct-answer { 
+            border: 2px solid var(--correct) !important; 
+            background-color: #e8f5e9 !important; 
+            position: relative;
+        }
+        .option-card.correct-answer::after {
+            content: "✔"; position: absolute; right: 15px; color: var(--correct); font-weight: bold;
+        }
+        
+        .option-card.wrong-selected { 
+            border: 2px solid var(--wrong) !important; 
+            background-color: #ffebee !important; 
+            position: relative;
+        }
+        .option-card.wrong-selected::after {
+            content: "✖"; position: absolute; right: 15px; color: var(--wrong); font-weight: bold;
+        }
+
+        /* Not Answered Indicator */
+        .status-msg {
+            margin-top: 20px; padding: 10px; border-radius: 8px;
+            text-align: center; font-weight: bold; display: none;
+        }
+        .status-not-answered {
+            background-color: #ffebee; color: var(--wrong); border: 1px solid var(--wrong);
+        }
+
+        /* SCORE CARD */
+        #score-card {
+            display: none; margin-top: 40px; padding: 30px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border-radius: 15px; text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            animation: slideUp 0.5s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* FOOTER */
+        footer {
+            position: fixed; bottom: 0; left: 0; width: 100%; background: white;
+            border-top: 1px solid #eee; padding: 15px 30px; display: flex; justify-content: space-between;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+        .nav-btn {
+            background-color: var(--secondary); color: white; border: none;
+            padding: 12px 25px; border-radius: 8px; font-size: 1rem; font-weight: 600;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .nav-btn:disabled { background-color: #ddd; cursor: not-allowed; }
+        .nav-btn:hover:not(:disabled) { background-color: var(--primary); }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="font-size: 1.1rem; font-weight:bold;">Class XI Trigonometry</div>
+        <div class="timer-badge" id="timer">00:00</div>
+        <button class="hamburger" onclick="toggleDrawer()">☰</button>
+    </header>
+
+    <div id="nav-drawer">
+        <h3 style="text-align:center; color: var(--primary);">Question Map</h3>
+        <div class="nav-legend">
+            <div class="legend-item"><div class="dot" style="background:var(--blue-nav)"></div> Current</div>
+            <div class="legend-item"><div class="dot" style="background:var(--correct)"></div> Done</div>
+            <div class="legend-item"><div class="dot" style="background:var(--wrong)"></div> Skipped</div>
+        </div>
+        <div class="nav-grid" id="nav-grid"></div>
+    </div>
+
+    <div class="container">
+        <div id="quiz-content" class="question-card">
+            <div class="question-text" id="question-text">Loading...</div>
+            <div class="options-list" id="options-container"></div>
+            
+            <div id="feedback-msg" class="status-msg"></div>
+
+            <div id="score-card">
+                <h2 style="margin:0;">Quiz Completed!</h2>
+                <p style="font-size: 2.5rem; margin: 10px 0; font-weight:bold;"><span id="final-score">0</span> / 50</p>
+                <button onclick="location.reload()" style="background:white; color:var(--primary); border:none; padding:10px 20px; border-radius:20px; font-weight:bold; cursor:pointer; margin-top:10px;">Restart Quiz</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <button class="nav-btn" id="prev-btn" onclick="changeQuestion(-1)">Previous</button>
+        <button class="nav-btn" id="next-btn" onclick="changeQuestion(1)">Next</button>
+    </footer>
+
+    <script>
+        // --- 50 CLASS XI LEVEL MCQs ---
+        const quizData = [
+            // --- 1. Angles & Radians ---
+            { id: 1, question: "The radian measure corresponding to \\( 240^\\circ \\) is:", options: ["\\( \\frac{2\\pi}{3} \\)", "\\( \\frac{4\\pi}{3} \\)", "\\( \\frac{5\\pi}{4} \\)", "\\( \\frac{3\\pi}{2} \\)"], correctIndex: 1 },
+            { id: 2, question: "Length of an arc of a circle of radius 5 cm subtending a central angle measuring \\( 15^\\circ \\) is:", options: ["\\( \\frac{5\\pi}{12} \\) cm", "\\( \\frac{5\\pi}{6} \\) cm", "\\( \\frac{\\pi}{12} \\) cm", "\\( \\frac{5\\pi}{2} \\) cm"], correctIndex: 0 },
+            { id: 3, question: "1 Radian is approximately equal to:", options: ["\\( 57^\\circ 16' \\)", "\\( 60^\\circ \\)", "\\( 180^\\circ \\)", "\\( 30^\\circ \\)"], correctIndex: 0 },
+            
+            // --- 2. Signs, Domain & Range ---
+            { id: 4, question: "If \\( \\cos x = -\\frac{1}{2} \\) and \\( x \\) lies in the third quadrant, find \\( \\sin x \\).", options: ["\\( \\frac{\\sqrt{3}}{2} \\)", "\\( -\\frac{\\sqrt{3}}{2} \\)", "\\( \\frac{1}{2} \\)", "\\( -\\frac{1}{2} \\)"], correctIndex: 1 },
+            { id: 5, question: "The domain of \\( f(x) = \\tan x \\) is:", options: ["\\( R \\)", "\\( R - \\{ n\\pi \\} \\)", "\\( R - \\{ (2n+1)\\frac{\\pi}{2} \\} \\)", "\\( [-1, 1] \\)"], correctIndex: 2 },
+            { id: 6, question: "The range of \\( f(x) = 3 \\sin x + 4 \\cos x \\) is:", options: ["\\( [-7, 7] \\)", "\\( [-1, 1] \\)", "\\( [-5, 5] \\)", "\\( [3, 4] \\)"], correctIndex: 2 },
+            { id: 7, question: "Which of the following is correct?", options: ["\\( \\sin 1^\\circ > \\sin 1 \\)", "\\( \\sin 1 > \\sin 1^\\circ \\)", "\\( \\sin 1 = \\sin 1^\\circ \\)", "\\( \\sin 1^\\circ = \\frac{\\pi}{180} \\sin 1 \\)"], correctIndex: 1 },
+
+            // --- 3. Compound Angles (Sum & Difference) ---
+            { id: 8, question: "Value of \\( \\sin 75^\\circ \\) is:", options: ["\\( \\frac{\\sqrt{6} - \\sqrt{2}}{4} \\)", "\\( \\frac{\\sqrt{6} + \\sqrt{2}}{4} \\)", "\\( \\frac{\\sqrt{3} + 1}{2\\sqrt{2}} \\)", "Both B and C"], correctIndex: 3 },
+            { id: 9, question: "Value of \\( \\tan 15^\\circ \\) is:", options: ["\\( 2 + \\sqrt{3} \\)", "\\( 2 - \\sqrt{3} \\)", "\\( \\sqrt{3} - 1 \\)", "\\( 1/\\sqrt{3} \\)"], correctIndex: 1 },
+            { id: 10, question: "Expand \\( \\cos(A + B) \\):", options: ["\\( \\cos A \\cos B + \\sin A \\sin B \\)", "\\( \\cos A \\cos B - \\sin A \\sin B \\)", "\\( \\sin A \\cos B + \\cos A \\sin B \\)", "\\( \\cos A \\sin B - \\sin A \\cos B \\)"], correctIndex: 1 },
+            { id: 11, question: "If \\( \\tan A = 1/2 \\) and \\( \\tan B = 1/3 \\), then \\( A + B \\) is:", options: ["\\( \\pi/6 \\)", "\\( \\pi/4 \\)", "\\( \\pi/3 \\)", "\\( \\pi/2 \\)"], correctIndex: 1 },
+            { id: 12, question: "\\( \\sin(45^\\circ + A) - \\cos(45^\\circ - A) \\) equals:", options: ["0", "1", "\\( 2\\sin A \\)", "\\( 2\\cos A \\)"], correctIndex: 0 },
+
+            // --- 4. Transformation Formulae (Product <-> Sum) ---
+            { id: 13, question: "Formula for \\( 2 \\sin A \\cos B \\) is:", options: ["\\( \\sin(A+B) + \\sin(A-B) \\)", "\\( \\sin(A+B) - \\sin(A-B) \\)", "\\( \\cos(A+B) + \\cos(A-B) \\)", "\\( \\cos(A-B) - \\cos(A+B) \\)"], correctIndex: 0 },
+            { id: 14, question: "Value of \\( \\cos 20^\\circ \\cos 40^\\circ \\cos 60^\\circ \\cos 80^\\circ \\):", options: ["1/8", "1/16", "3/16", "1/32"], correctIndex: 1 },
+            { id: 15, question: "\\( \\frac{\\sin 5x - 2\\sin 3x + \\sin x}{\\cos 5x - \\cos x} \\) equals:", options: ["\\( \\tan x \\)", "\\( \\cot x \\)", "\\( \\tan 2x \\)", "\\( \\sin x \\)"], correctIndex: 0 },
+            { id: 16, question: "Value of \\( \\sin 10^\\circ \\sin 50^\\circ \\sin 70^\\circ \\):", options: ["1/4", "1/8", "1/2", "\\( \\sqrt{3}/8 \\)"], correctIndex: 1 },
+
+            // --- 5. Multiple & Sub-multiple Angles ---
+            { id: 17, question: "\\( \\cos 2A \\) in terms of \\( \\tan A \\) is:", options: ["\\( \\frac{1 - \\tan^2 A}{1 + \\tan^2 A} \\)", "\\( \\frac{2\\tan A}{1 + \\tan^2 A} \\)", "\\( \\frac{1 + \\tan^2 A}{1 - \\tan^2 A} \\)", "\\( \\frac{2\\tan A}{1 - \\tan^2 A} \\)"], correctIndex: 0 },
+            { id: 18, question: "If \\( \\tan x = 3/4 \\), then \\( \\sin 2x \\) is:", options: ["24/25", "7/25", "12/25", "4/5"], correctIndex: 0 },
+            { id: 19, question: "Value of \\( \\sin 18^\\circ \\) is:", options: ["\\( \\frac{\\sqrt{5} + 1}{4} \\)", "\\( \\frac{\\sqrt{5} - 1}{4} \\)", "\\( \\frac{\\sqrt{10 - 2\\sqrt{5}}}{4} \\)", "\\( \\frac{\\sqrt{5}}{4} \\)"], correctIndex: 1 },
+            { id: 20, question: "\\( \\sqrt{2 + \\sqrt{2 + 2 \\cos 4\\theta}} \\) equals:", options: ["\\( 2 \\cos \\theta \\)", "\\( \\cos 2\\theta \\)", "\\( 2 \\sin \\theta \\)", "\\( \\sin 2\\theta \\)"], correctIndex: 0 },
+            { id: 21, question: "\\( \\frac{\\sin 3A}{\\sin A} - \\frac{\\cos 3A}{\\cos A} \\) is equal to:", options: ["0", "1", "2", "3"], correctIndex: 2 },
+            { id: 22, question: "The maximum value of \\( \\sin x \\cos x \\) is:", options: ["1", "1/2", "2", "\\( \\sqrt{2} \\)"], correctIndex: 1 },
+            { id: 23, question: "If \\( \\cos A = \\sqrt{3}/2 \\), then \\( \\cos 3A \\) equals:", options: ["0", "1", "-1", "\\( 1/2 \\)"], correctIndex: 0 },
+
+            // --- 6. Conditional Identities ---
+            { id: 24, question: "If \\( A + B + C = \\pi \\), then \\( \\tan A + \\tan B + \\tan C \\) equals:", options: ["0", "1", "\\( \\tan A \\tan B \\tan C \\)", "\\( \\cot A \\cot B \\cot C \\)"], correctIndex: 2 },
+            { id: 25, question: "If \\( A + B = 45^\\circ \\), then \\( (1 + \\tan A)(1 + \\tan B) \\) equals:", options: ["1", "2", "0", "-1"], correctIndex: 1 },
+            
+            // --- 7. Trigonometric Equations ---
+            { id: 26, question: "The principal solution of \\( \\sin x = \\frac{\\sqrt{3}}{2} \\) is:", options: ["\\( \\frac{\\pi}{3}, \\frac{2\\pi}{3} \\)", "\\( \\frac{\\pi}{6}, \\frac{5\\pi}{6} \\)", "\\( \\frac{\\pi}{3}, \\frac{4\\pi}{3} \\)", "\\( \\frac{\\pi}{3} \\) only"], correctIndex: 0 },
+            { id: 27, question: "The general solution of \\( \\tan x = 0 \\) is:", options: ["\\( n\\pi \\)", "\\( 2n\\pi \\)", "\\( (2n+1)\\frac{\\pi}{2} \\)", "\\( n\\frac{\\pi}{2} \\)"], correctIndex: 0 },
+            { id: 28, question: "The general solution of \\( \\cos^2 x = 1/2 \\) is:", options: ["\\( n\\pi \\pm \\frac{\\pi}{4} \\)", "\\( 2n\\pi \\pm \\frac{\\pi}{4} \\)", "\\( n\\pi \\pm \\frac{\\pi}{6} \\)", "\\( n\\pi \\pm \\frac{\\pi}{3} \\)"], correctIndex: 0 },
+            { id: 29, question: "If \\( \\sin x + \\cos x = \\sqrt{2} \\), then general value of x is:", options: ["\\( 2n\\pi + \\frac{\\pi}{4} \\)", "\\( 2n\\pi - \\frac{\\pi}{4} \\)", "\\( n\\pi + \\frac{\\pi}{4} \\)", "\\( n\\pi + (-1)^n \\frac{\\pi}{4} \\)"], correctIndex: 0 },
+            { id: 30, question: "Number of solutions of \\( \\tan x + \\sec x = 2 \\cos x \\) in \\( [0, 2\\pi] \\):", options: ["1", "2", "3", "0"], correctIndex: 1 },
+
+            // --- 8. Properties of Triangles (Sine & Cosine Rule) ---
+            { id: 31, question: "In \\( \\triangle ABC \\), \\( \\frac{a}{\\sin A} = \\frac{b}{\\sin B} = \\frac{c}{\\sin C} \\) is known as:", options: ["Cosine Rule", "Sine Rule", "Projection Formula", "Napier's Analogy"], correctIndex: 1 },
+            { id: 32, question: "In \\( \\triangle ABC \\), \\( c^2 \\) equals:", options: ["\\( a^2 + b^2 - 2ab \\cos C \\)", "\\( a^2 + b^2 + 2ab \\cos C \\)", "\\( a^2 - b^2 - 2ab \\cos C \\)", "\\( a^2 + b^2 \\)"], correctIndex: 0 },
+            { id: 33, question: "In \\( \\triangle ABC \\), if \\( a=3, b=4, c=5 \\), then \\( \\sin A \\) is:", options: ["3/5", "4/5", "1", "3/4"], correctIndex: 0 },
+            { id: 34, question: "Projection formula for side \\( a \\) is:", options: ["\\( b \\cos C + c \\cos B \\)", "\\( b \\sin C + c \\sin B \\)", "\\( c \\cos A + a \\cos C \\)", "\\( b \\cos C - c \\cos B \\)"], correctIndex: 0 },
+            { id: 35, question: "In \\( \\triangle ABC \\), if \\( \\angle A = 30^\\circ, \\angle B = 60^\\circ \\), find ratio \\( a:b:c \\).", options: ["\\( 1:\\sqrt{3}:2 \\)", "\\( 1:2:\\sqrt{3} \\)", "\\( 1:1:\\sqrt{2} \\)", "\\( 1:\\sqrt{2}:\\sqrt{3} \\)"], correctIndex: 0 },
+
+            // --- 9. Advanced Identities & Mixed ---
+            { id: 36, question: "Value of \\( \\tan 3A - \\tan 2A - \\tan A \\) is equal to:", options: ["\\( \\tan 3A \\tan 2A \\tan A \\)", "\\( -\\tan 3A \\tan 2A \\tan A \\)", "\\( \\tan A \\tan 2A - \\tan 3A \\)", "1"], correctIndex: 0 },
+            { id: 37, question: "Minimum value of \\( 3 \\cos x + 4 \\sin x + 8 \\) is:", options: ["5", "3", "8", "3"], correctIndex: 1 },
+            { id: 38, question: "If \\( \\sin x + \\csc x = 2 \\), then \\( \\sin^{10} x + \\csc^{10} x \\) is:", options: ["2", "10", "20", "1"], correctIndex: 0 },
+            { id: 39, question: "\\( \\cos 20^\\circ + \\cos 100^\\circ + \\cos 140^\\circ \\) equals:", options: ["0", "1", "\\( -1/2 \\)", "\\( \\cos 10^\\circ \\)"], correctIndex: 0 },
+            { id: 40, question: "General solution of \\( 4 \\sin^2 x = 3 \\) is:", options: ["\\( n\\pi \\pm \\frac{\\pi}{3} \\)", "\\( n\\pi \\pm \\frac{\\pi}{6} \\)", "\\( 2n\\pi \\pm \\frac{\\pi}{3} \\)", "\\( 2n\\pi \\pm \\frac{\\pi}{6} \\)"], correctIndex: 0 },
+            { id: 41, question: "If \\( A + B = \\pi/4 \\), then \\( (1 + \\tan A)(1 + \\tan B) \\) equals:", options: ["2", "1", "-1", "0"], correctIndex: 0 },
+            { id: 42, question: "\\( \\frac{\\sin A + \\sin 3A + \\sin 5A + \\sin 7A}{\\cos A + \\cos 3A + \\cos 5A + \\cos 7A} \\) equals:", options: ["\\( \\tan 4A \\)", "\\( \\cot 4A \\)", "\\( \\tan 3A \\)", "\\( \\sin 4A \\)"], correctIndex: 0 },
+            { id: 43, question: "Value of \\( 2 \\sin^2 \\frac{\\pi}{6} + \\csc^2 \\frac{7\\pi}{6} \\cos^2 \\frac{\\pi}{3} \\) is:", options: ["3/2", "1", "0", "-1"], correctIndex: 0 },
+            { id: 44, question: "Which of the following functions has period \\( \\pi \\)?", options: ["\\( \\sin x \\)", "\\( \\cos x \\)", "\\( \\tan x \\)", "\\( \\sec x \\)"], correctIndex: 2 },
+            { id: 45, question: "If \\( \\tan x = -\\frac{5}{12} \\), \\( x \\) in 2nd quadrant, then \\( \\sec x \\) is:", options: ["-13/12", "13/12", "-13/5", "13/5"], correctIndex: 0 },
+            { id: 46, question: "Value of \\( \\sin 50^\\circ - \\sin 70^\\circ + \\sin 10^\\circ \\) is:", options: ["0", "1", "-1", "1/2"], correctIndex: 0 },
+            { id: 47, question: "\\( \\cot x \\cot 2x - \\cot 2x \\cot 3x - \\cot 3x \\cot x \\) equals:", options: ["1", "0", "-1", "2"], correctIndex: 0 },
+            { id: 48, question: "In \\( \\triangle ABC \\), \\( \\frac{b-c}{b+c} \\cot \\frac{A}{2} \\) is equal to:", options: ["\\( \\tan \\frac{B-C}{2} \\)", "\\( \\tan \\frac{B+C}{2} \\)", "\\( \\sin \\frac{B-C}{2} \\)", "\\( \\cos \\frac{B-C}{2} \\)"], correctIndex: 0 },
+            { id: 49, question: "Area of a triangle with sides 3, 4, 5 is:", options: ["6", "12", "10", "15"], correctIndex: 0 },
+            { id: 50, question: "If \\( \\sin x \\) and \\( \\cos x \\) are roots of \\( ax^2 - bx + c = 0 \\), then:", options: ["\\( a^2 - b^2 + 2ac = 0 \\)", "\\( a^2 + b^2 + 2ac = 0 \\)", "\\( a^2 - b^2 - 2ac = 0 \\)", "\\( b^2 - a^2 = 2ac \\)"], correctIndex: 0 }
+        ];
+
+        // --- CORE LOGIC ---
+        let currentQuestion = 0;
+        let userAnswers = new Array(quizData.length).fill(null);
+        let visitedQuestions = new Array(quizData.length).fill(false);
+        let isSubmitted = false;
+        let totalSeconds = quizData.length * 60; 
+        let timerInterval;
+
+        function init() {
+            visitedQuestions[0] = true;
+            renderNavGrid();
+            startTimer();
+            loadQuestion(0);
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                if(totalSeconds > 0 && !isSubmitted) {
+                    totalSeconds--;
+                    const m = Math.floor(totalSeconds / 60).toString().padStart(2,'0');
+                    const s = (totalSeconds % 60).toString().padStart(2,'0');
+                    document.getElementById('timer').innerText = `${m}:${s}`;
+                    if(totalSeconds === 0) submitQuiz();
+                }
+            }, 1000);
+        }
+
+        function loadQuestion(index) {
+            const data = quizData[index];
+            const labels = ['A', 'B', 'C', 'D'];
+            
+            // 1. Render Question
+            document.getElementById('question-text').innerHTML = `<strong>Q${index + 1}.</strong> ${data.question}`;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            data.options.forEach((opt, i) => {
+                const btn = document.createElement('div');
+                btn.className = 'option-card';
+                if (userAnswers[index] === i) btn.classList.add('selected');
+                
+                if (isSubmitted) {
+                    btn.style.cursor = 'default';
+                    if (i === data.correctIndex) btn.classList.add('correct-answer');
+                    else if (userAnswers[index] === i) btn.classList.add('wrong-selected');
+                } else {
+                    btn.onclick = () => {
+                        userAnswers[currentQuestion] = i;
+                        loadQuestion(currentQuestion);
+                        renderNavGrid();
+                    };
+                }
+
+                btn.innerHTML = `
+                    <div class="option-badge">${labels[i]}</div>
+                    <div class="option-text">${opt}</div>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+
+            // 2. Feedback Logic
+            const feedbackMsg = document.getElementById('feedback-msg');
+            if (isSubmitted) {
+                if (userAnswers[index] === null) {
+                    feedbackMsg.innerText = "Not Answered";
+                    feedbackMsg.className = "status-msg status-not-answered";
+                    feedbackMsg.style.display = "block";
+                } else {
+                    feedbackMsg.style.display = "none";
+                }
+            } else {
+                feedbackMsg.style.display = "none";
+            }
+
+            // 3. Navigation Buttons
+            document.getElementById('prev-btn').disabled = index === 0;
+            const nextBtn = document.getElementById('next-btn');
+            
+            if (index === quizData.length - 1) {
+                if(isSubmitted) {
+                     nextBtn.innerText = "Results";
+                     nextBtn.onclick = () => document.getElementById('score-card').scrollIntoView({behavior: 'smooth'});
+                } else {
+                     nextBtn.innerText = "Submit Quiz";
+                     nextBtn.onclick = submitQuiz;
+                }
+            } else {
+                nextBtn.innerText = "Next";
+                nextBtn.onclick = () => changeQuestion(1);
+            }
+
+            // 4. Trigger MathJax
+            if (window.MathJax && MathJax.startup) {
+                MathJax.startup.promise.then(() => {
+                    MathJax.typesetPromise([document.getElementById('quiz-content')]);
+                });
+            }
+        }
+
+        function changeQuestion(dir) {
+            const newIndex = currentQuestion + dir;
+            if (newIndex >= 0 && newIndex < quizData.length) {
+                currentQuestion = newIndex;
+                visitedQuestions[currentQuestion] = true;
+                loadQuestion(currentQuestion);
+                renderNavGrid();
+            }
+        }
+
+        function submitQuiz() {
+            isSubmitted = true;
+            clearInterval(timerInterval);
+            
+            let score = 0;
+            userAnswers.forEach((ans, i) => { if(ans === quizData[i].correctIndex) score++; });
+
+            const scoreCard = document.getElementById('score-card');
+            document.getElementById('final-score').innerText = score;
+            scoreCard.style.display = 'block';
+            scoreCard.scrollIntoView({ behavior: 'smooth' });
+
+            loadQuestion(currentQuestion);
+            renderNavGrid();
+        }
+
+        function renderNavGrid() {
+            const grid = document.getElementById('nav-grid');
+            grid.innerHTML = '';
+            quizData.forEach((_, i) => {
+                const item = document.createElement('div');
+                item.className = `nav-item ${i === currentQuestion ? 'current' : ''}`;
+                if (userAnswers[i] !== null) item.classList.add('attempted');
+                else if (visitedQuestions[i]) item.classList.add('viewed-unanswered');
+                
+                item.innerText = i + 1;
+                item.onclick = () => {
+                    currentQuestion = i;
+                    visitedQuestions[i] = true;
+                    loadQuestion(i);
+                    toggleDrawer();
+                };
+                grid.appendChild(item);
+            });
+        }
+
+        function toggleDrawer() {
+            document.getElementById('nav-drawer').classList.toggle('open');
+        }
+
+        window.onload = init;
+
+    </script>
+</body>
+</html>
