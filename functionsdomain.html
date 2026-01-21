@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domain of Functions - 50 MCQs</title>
+    
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      startup: {
+        pageReady: () => {
+          return MathJax.startup.defaultPageReady();
+        }
+      }
+    };
+    </script>
+    
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root {
+            --primary: #511696;
+            --secondary: #7B61FF;
+            --yellow: #FFEE58;
+            --bg-color: #f5f5f5;
+            --correct: #4CAF50;
+            --wrong: #F44336;
+            --blue-nav: #2196F3;
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; padding-bottom: 80px; background: var(--bg-color); }
+
+        /* HEADER */
+        header {
+            background: var(--primary); color: white; padding: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .timer-badge { background: rgba(255,255,255,0.25); padding: 5px 12px; border-radius: 6px; font-weight: bold; }
+        .hamburger { font-size: 1.5rem; background: none; border: none; color: white; cursor: pointer; }
+
+        /* NAVIGATION DRAWER */
+        #nav-drawer {
+            position: fixed; top: 60px; right: -320px; width: 300px; height: 100%;
+            background: white; box-shadow: -4px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease-in-out; z-index: 99; padding: 20px; overflow-y: auto;
+        }
+        #nav-drawer.open { right: 0; }
+        
+        .nav-legend { font-size: 0.85rem; margin-bottom: 15px; display: flex; gap: 10px; justify-content: center;}
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+        .nav-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        .nav-item {
+            width: 40px; height: 40px; border-radius: 8px; border: 1px solid #e0e0e0;
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: 0.2s;
+        }
+        .nav-item:hover { transform: scale(1.05); }
+        .nav-item.current { background: var(--blue-nav); color: white; border-color: var(--blue-nav); }
+        .nav-item.attempted { background: var(--correct); color: white; border-color: var(--correct); }
+        .nav-item.viewed-unanswered { background: var(--wrong); color: white; border-color: var(--wrong); }
+
+        /* MAIN QUIZ CONTAINER */
+        .container { padding: 20px; max-width: 800px; margin: 0 auto; background: white; min-height: 80vh; }
+        
+        .question-card { margin-top: 10px; }
+        .question-text { 
+            font-size: 1.2rem; font-weight: 600; margin-bottom: 30px; 
+            color: #222; line-height: 1.6;
+        }
+
+        .options-list { display: flex; flex-direction: column; gap: 15px; }
+
+        .option-card {
+            display: flex; align-items: center; border: 1px solid #ddd;
+            border-radius: 12px; padding: 12px; cursor: pointer; 
+            transition: all 0.2s; background: white;
+        }
+        .option-card:hover { background-color: #f8f9fa; border-color: #bbb; }
+        
+        .option-badge {
+            background-color: var(--yellow); color: black; font-weight: bold;
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; 
+            margin-right: 15px; flex-shrink: 0; font-size: 0.9rem;
+        }
+        .option-text { font-size: 1.05rem; color: #444; width: 100%; }
+
+        /* SELECTION & RESULTS */
+        .option-card.selected { border: 2px solid var(--primary); background-color: #f3e5f5; }
+        
+        /* Result Mode Styles */
+        .option-card.correct-answer { 
+            border: 2px solid var(--correct) !important; 
+            background-color: #e8f5e9 !important; 
+            position: relative;
+        }
+        .option-card.correct-answer::after {
+            content: "✔"; position: absolute; right: 15px; color: var(--correct); font-weight: bold;
+        }
+        
+        .option-card.wrong-selected { 
+            border: 2px solid var(--wrong) !important; 
+            background-color: #ffebee !important; 
+            position: relative;
+        }
+        .option-card.wrong-selected::after {
+            content: "✖"; position: absolute; right: 15px; color: var(--wrong); font-weight: bold;
+        }
+
+        /* Not Answered Indicator */
+        .status-msg {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            display: none; /* Hidden by default */
+        }
+        .status-not-answered {
+            background-color: #ffebee;
+            color: var(--wrong);
+            border: 1px solid var(--wrong);
+        }
+
+        /* SCORE CARD */
+        #score-card {
+            display: none; margin-top: 40px; padding: 30px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border-radius: 15px; text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            animation: slideUp 0.5s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* FOOTER */
+        footer {
+            position: fixed; bottom: 0; left: 0; width: 100%; background: white;
+            border-top: 1px solid #eee; padding: 15px 30px; display: flex; justify-content: space-between;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+        .nav-btn {
+            background-color: var(--secondary); color: white; border: none;
+            padding: 12px 25px; border-radius: 8px; font-size: 1rem; font-weight: 600;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .nav-btn:disabled { background-color: #ddd; cursor: not-allowed; }
+        .nav-btn:hover:not(:disabled) { background-color: var(--primary); }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="font-size: 1.1rem; font-weight:bold;">Domain of Functions Quiz</div>
+        <div class="timer-badge" id="timer">00:00</div>
+        <button class="hamburger" onclick="toggleDrawer()">☰</button>
+    </header>
+
+    <div id="nav-drawer">
+        <h3 style="text-align:center; color: var(--primary);">Question Map</h3>
+        <div class="nav-legend">
+            <div class="legend-item"><div class="dot" style="background:var(--blue-nav)"></div> Current</div>
+            <div class="legend-item"><div class="dot" style="background:var(--correct)"></div> Done</div>
+            <div class="legend-item"><div class="dot" style="background:var(--wrong)"></div> Skipped</div>
+        </div>
+        <div class="nav-grid" id="nav-grid"></div>
+    </div>
+
+    <div class="container">
+        <div id="quiz-content" class="question-card">
+            <div class="question-text" id="question-text">Loading Question...</div>
+            <div class="options-list" id="options-container"></div>
+            
+            <div id="feedback-msg" class="status-msg"></div>
+
+            <div id="score-card">
+                <h2 style="margin:0;">Quiz Completed!</h2>
+                <p style="font-size: 2.5rem; margin: 10px 0; font-weight:bold;"><span id="final-score">0</span> / 50</p>
+                <button onclick="location.reload()" style="background:white; color:var(--primary); border:none; padding:10px 20px; border-radius:20px; font-weight:bold; cursor:pointer; margin-top:10px;">Restart Quiz</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <button class="nav-btn" id="prev-btn" onclick="changeQuestion(-1)">Previous</button>
+        <button class="nav-btn" id="next-btn" onclick="changeQuestion(1)">Next</button>
+    </footer>
+
+    <script>
+        // --- DATA SECTION: 50 Questions with Strict Double Backslashes ---
+        const quizData = [
+            // --- SECTION 1: ALGEBRAIC FUNCTIONS ---
+            { id: 1, question: "Find the domain of \\( f(x) = \\frac{1}{x} \\)", options: ["\\( R \\)", "\\( R - \\{0\\} \\)", "\\( (0, \\infty) \\)", "\\( [0, \\infty) \\)"], correctIndex: 1 },
+            { id: 2, question: "Find the domain of \\( f(x) = \\sqrt{x} \\)", options: ["\\( R \\)", "\\( (0, \\infty) \\)", "\\( [0, \\infty) \\)", "\\( R - \\{0\\} \\)"], correctIndex: 2 },
+            { id: 3, question: "Find the domain of \\( f(x) = \\frac{1}{\\sqrt{x}} \\)", options: ["\\( [0, \\infty) \\)", "\\( (0, \\infty) \\)", "\\( R - \\{0\\} \\)", "\\( R \\)"], correctIndex: 1 },
+            { id: 4, question: "Find the domain of \\( f(x) = \\sqrt{x - 3} \\)", options: ["\\( [3, \\infty) \\)", "\\( (3, \\infty) \\)", "\\( (-\\infty, 3] \\)", "\\( R \\)"], correctIndex: 0 },
+            { id: 5, question: "Find the domain of \\( f(x) = \\frac{1}{x^2 - 1} \\)", options: ["\\( R \\)", "\\( R - \\{1\\} \\)", "\\( R - \\{-1, 1\\} \\)", "\\( (-1, 1) \\)"], correctIndex: 2 },
+            { id: 6, question: "Find the domain of \\( f(x) = \\sqrt{9 - x^2} \\)", options: ["\\( [-3, 3] \\)", "\\( (-3, 3) \\)", "\\( [3, \\infty) \\)", "\\( R \\)"], correctIndex: 0 },
+            { id: 7, question: "Find the domain of \\( f(x) = \\sqrt{x^2 - 16} \\)", options: ["\\( [-4, 4] \\)", "\\( (-\\infty, -4] \\cup [4, \\infty) \\)", "\\( (4, \\infty) \\)", "\\( R - (-4, 4) \\)"], correctIndex: 1 },
+            { id: 8, question: "Find the domain of \\( f(x) = |x| \\)", options: ["\\( [0, \\infty) \\)", "\\( R \\)", "\\( (0, \\infty) \\)", "\\( Z \\)"], correctIndex: 1 },
+            { id: 9, question: "Find the domain of \\( f(x) = \\frac{x+2}{x-5} \\)", options: ["\\( R \\)", "\\( R - \\{5\\} \\)", "\\( R - \\{-2\\} \\)", "\\( (5, \\infty) \\)"], correctIndex: 1 },
+            { id: 10, question: "Find the domain of \\( f(x) = \\sqrt[3]{x} \\) (Cube root)", options: ["\\( [0, \\infty) \\)", "\\( R \\)", "\\( (0, \\infty) \\)", "\\( R - \\{0\\} \\)"], correctIndex: 1 },
+
+            // --- SECTION 2: LOGARITHMIC FUNCTIONS ---
+            { id: 11, question: "Find the domain of \\( f(x) = \\ln(x) \\)", options: ["\\( R \\)", "\\( [0, \\infty) \\)", "\\( (0, \\infty) \\)", "\\( R - \\{0\\} \\)"], correctIndex: 2 },
+            { id: 12, question: "Find the domain of \\( f(x) = \\log_{10}(x - 2) \\)", options: ["\\( [2, \\infty) \\)", "\\( (2, \\infty) \\)", "\\( R - \\{2\\} \\)", "\\( x < 2 \\)"], correctIndex: 1 },
+            { id: 13, question: "Find the domain of \\( f(x) = \\log(x^2 - 4) \\)", options: ["\\( (-2, 2) \\)", "\\( (-\\infty, -2) \\cup (2, \\infty) \\)", "\\( [-2, 2] \\)", "\\( R \\)"], correctIndex: 1 },
+            { id: 14, question: "Find the domain of \\( f(x) = \\log(1 - x) \\)", options: ["\\( x < 1 \\)", "\\( x > 1 \\)", "\\( x \\le 1 \\)", "\\( x \\ne 1 \\)"], correctIndex: 0 },
+            { id: 15, question: "Find the domain of \\( f(x) = \\frac{1}{\\ln x} \\)", options: ["\\( (0, \\infty) \\)", "\\( (0, \\infty) - \\{1\\} \\)", "\\( [0, \\infty) \\)", "\\( R \\)"], correctIndex: 1 },
+            { id: 16, question: "Find the domain of \\( f(x) = \\sqrt{\\ln x} \\)", options: ["\\( x > 0 \\)", "\\( x \\ge 1 \\)", "\\( 0 < x < 1 \\)", "\\( x > 1 \\)"], correctIndex: 1 },
+            { id: 17, question: "Find the domain of \\( f(x) = \\ln |x| \\)", options: ["\\( R \\)", "\\( (0, \\infty) \\)", "\\( R - \\{0\\} \\)", "\\( [0, \\infty) \\)"], correctIndex: 2 },
+            { id: 18, question: "Find the domain of \\( f(x) = \\ln(x^2 + 1) \\)", options: ["\\( (0, \\infty) \\)", "\\( R \\)", "\\( R - \\{0\\} \\)", "\\( [1, \\infty) \\)"], correctIndex: 1 },
+            { id: 19, question: "Find the domain of \\( f(x) = \\log_x (5) \\) (Base x)", options: ["\\( x > 0 \\)", "\\( x > 0, x \\ne 1 \\)", "\\( x \\ge 0 \\)", "\\( R \\)"], correctIndex: 1 },
+            { id: 20, question: "Find the domain of \\( f(x) = \\ln(\\sin x) \\)", options: ["\\( R \\)", "\\( (2n\\pi, (2n+1)\\pi) \\)", "\\( [0, \\pi] \\)", "\\( n\\pi \\)"], correctIndex: 1 },
+
+            // --- SECTION 3: TRIGONOMETRIC FUNCTIONS ---
+            { id: 21, question: "Find the domain of \\( f(x) = \\sin x \\)", options: ["\\( [-1, 1] \\)", "\\( R \\)", "\\( [0, 2\\pi] \\)", "\\( (-\\infty, 0) \\)"], correctIndex: 1 },
+            { id: 22, question: "Find the domain of \\( f(x) = \\cos x \\)", options: ["\\( R \\)", "\\( [-1, 1] \\)", "\\( [0, \\pi] \\)", "\\( R - \\{0\\} \\)"], correctIndex: 0 },
+            { id: 23, question: "Find the domain of \\( f(x) = \\tan x \\)", options: ["\\( R \\)", "\\( R - \\{(2n+1)\\frac{\\pi}{2}\\} \\)", "\\( R - \\{n\\pi\\} \\)", "\\( [-1, 1] \\)"], correctIndex: 1 },
+            { id: 24, question: "Find the domain of \\( f(x) = \\cot x \\)", options: ["\\( R - \\{(2n+1)\\frac{\\pi}{2}\\} \\)", "\\( R - \\{n\\pi\\} \\)", "\\( R \\)", "\\( (0, \\pi) \\)"], correctIndex: 1 },
+            { id: 25, question: "Find the domain of \\( f(x) = \\sec x \\)", options: ["\\( R \\)", "\\( R - \\{(2n+1)\\frac{\\pi}{2}\\} \\)", "\\( [-1, 1] \\)", "\\( R - \\{n\\pi\\} \\)"], correctIndex: 1 },
+            { id: 26, question: "Find the domain of \\( f(x) = \\csc x \\)", options: ["\\( R - \\{n\\pi\\} \\)", "\\( R - \\{(2n+1)\\frac{\\pi}{2}\\} \\)", "\\( R \\)", "\\( (-1, 1) \\)"], correctIndex: 0 },
+            { id: 27, question: "Find the domain of \\( f(x) = \\frac{1}{1 - \\sin x} \\)", options: ["\\( R \\)", "\\( R - \\{ \\frac{\\pi}{2} + 2n\\pi \\} \\)", "\\( R - \\{n\\pi\\} \\)", "\\( [-1, 1] \\)"], correctIndex: 1 },
+            { id: 28, question: "Find the domain of \\( f(x) = \\sqrt{\\sin x - 1} \\)", options: ["\\( R \\)", "\\( \\emptyset \\text{ (unless } \\sin x = 1) \\)", "\\( x = \\frac{\\pi}{2} + 2n\\pi \\)", "\\( [0, 1] \\)"], correctIndex: 2 },
+            { id: 29, question: "Find the domain of \\( f(x) = \\tan(2x) \\)", options: ["\\( R - \\{(2n+1)\\frac{\\pi}{4}\\} \\)", "\\( R - \\{(2n+1)\\frac{\\pi}{2}\\} \\)", "\\( R \\)", "\\( R - \\{n\\pi\\} \\)"], correctIndex: 0 },
+            { id: 30, question: "Find the domain of \\( f(x) = \\sqrt{\\cos x} \\)", options: ["\\( [-\\frac{\\pi}{2}, \\frac{\\pi}{2}] + 2n\\pi \\)", "\\( [0, \\pi] \\)", "\\( R \\)", "\\( [0, 2\\pi] \\)"], correctIndex: 0 },
+
+            // --- SECTION 4: INVERSE TRIGONOMETRIC ---
+            { id: 31, question: "Find the domain of \\( f(x) = \\sin^{-1} x \\)", options: ["\\( R \\)", "\\( [-1, 1] \\)", "\\( (-1, 1) \\)", "\\( [0, \\pi] \\)"], correctIndex: 1 },
+            { id: 32, question: "Find the domain of \\( f(x) = \\cos^{-1} x \\)", options: ["\\( [0, \\pi] \\)", "\\( [-1, 1] \\)", "\\( R \\)", "\\( (-1, 1) \\)"], correctIndex: 1 },
+            { id: 33, question: "Find the domain of \\( f(x) = \\tan^{-1} x \\)", options: ["\\( R \\)", "\\( [-1, 1] \\)", "\\( (-\\frac{\\pi}{2}, \\frac{\\pi}{2}) \\)", "\\( R - \\{0\\} \\)"], correctIndex: 0 },
+            { id: 34, question: "Find the domain of \\( f(x) = \\sin^{-1}(2x) \\)", options: ["\\( [-1, 1] \\)", "\\( [-\\frac{1}{2}, \\frac{1}{2}] \\)", "\\( (-2, 2) \\)", "\\( R \\)"], correctIndex: 1 },
+            { id: 35, question: "Find the domain of \\( f(x) = \\cos^{-1}(\\frac{x}{2}) \\)", options: ["\\( [-1, 1] \\)", "\\( [-2, 2] \\)", "\\( [-\\frac{1}{2}, \\frac{1}{2}] \\)", "\\( R \\)"], correctIndex: 1 },
+            { id: 36, question: "Find the domain of \\( f(x) = \\sin^{-1}(x - 1) \\)", options: ["\\( [-1, 1] \\)", "\\( [0, 2] \\)", "\\( [1, 3] \\)", "\\( [0, 1] \\)"], correctIndex: 1 },
+            { id: 37, question: "Find the domain of \\( f(x) = \\sec^{-1} x \\)", options: ["\\( [-1, 1] \\)", "\\( (-\\infty, -1] \\cup [1, \\infty) \\)", "\\( R \\)", "\\( (0, \\pi) \\)"], correctIndex: 1 },
+            { id: 38, question: "Find the domain of \\( f(x) = \\cot^{-1} x \\)", options: ["\\( R \\)", "\\( R - \\{0\\} \\)", "\\( (0, \\pi) \\)", "\\( [-1, 1] \\)"], correctIndex: 0 },
+            { id: 39, question: "Find the domain of \\( f(x) = \\frac{1}{\\sin^{-1} x} \\)", options: ["\\( [-1, 1] \\)", "\\( [-1, 1] - \\{0\\} \\)", "\\( (-1, 1) \\)", "\\( R \\)"], correctIndex: 1 },
+            { id: 40, question: "Find the domain of \\( f(x) = \\sqrt{\\sin^{-1} x} \\)", options: ["\\( [0, 1] \\)", "\\( [-1, 1] \\)", "\\( (0, 1] \\)", "\\( [0, \\pi] \\)"], correctIndex: 0 },
+
+            // --- SECTION 5: ADVANCED & MIXED ---
+            { id: 41, question: "Find the domain of \\( f(x) = e^x \\)", options: ["\\( (0, \\infty) \\)", "\\( R \\)", "\\( [0, \\infty) \\)", "\\( R - \\{0\\} \\)"], correctIndex: 1 },
+            { id: 42, question: "Find the domain of \\( f(x) = \\sqrt{x-2} + \\sqrt{5-x} \\)", options: ["\\( [2, 5] \\)", "\\( (2, 5) \\)", "\\( [5, \\infty) \\)", "\\( (-\\infty, 2] \\)"], correctIndex: 0 },
+            { id: 43, question: "Find the domain of \\( f(x) = \\frac{1}{\\sqrt{x^2 - 1}} \\)", options: ["\\( [-1, 1] \\)", "\\( (-\\infty, -1) \\cup (1, \\infty) \\)", "\\( R - [-1, 1] \\)", "\\( (-1, 1) \\)"], correctIndex: 1 },
+            { id: 44, question: "Find the domain of \\( f(x) = \\sqrt{\\frac{x-1}{x+2}} \\)", options: ["\\( (-\\infty, -2) \\cup [1, \\infty) \\)", "\\( (-2, 1] \\)", "\\( R - \\{-2\\} \\)", "\\( [1, \\infty) \\)"], correctIndex: 0 },
+            { id: 45, question: "Find the domain of \\( f(x) = 2^{1/x} \\)", options: ["\\( R \\)", "\\( R - \\{0\\} \\)", "\\( (0, \\infty) \\)", "\\( [0, \\infty) \\)"], correctIndex: 1 },
+            { id: 46, question: "Find the domain of \\( f(x) = \\frac{x}{|x|} \\) (Signum)", options: ["\\( R \\)", "\\( R - \\{0\\} \\)", "\\( [0, \\infty) \\)", "\\( \\{-1, 1\\} \\)"], correctIndex: 1 },
+            { id: 47, question: "Find the domain of \\( f(x) = \\sqrt{-\\sin x} \\)", options: ["\\( [0, \\pi] \\)", "\\( [\\pi, 2\\pi] + 2n\\pi \\)", "\\( R \\)", "\\( \\emptyset \\)"], correctIndex: 1 },
+            { id: 48, question: "Find the domain of \\( f(x) = [x] \\) (Greatest Integer)", options: ["\\( Z \\)", "\\( R \\)", "\\( R - Z \\)", "\\( [0, \\infty) \\)"], correctIndex: 1 },
+            { id: 49, question: "Find the domain of \\( f(x) = \\frac{1}{[x]} \\)", options: ["\\( R \\)", "\\( R - [0, 1) \\)", "\\( R - Z \\)", "\\( [1, \\infty) \\)"], correctIndex: 1 },
+            { id: 50, question: "Find the domain of \\( f(x) = \\log_{10}(1 - \\log_{10}(x^2 - 5x + 16)) \\)", options: ["\\( (2, 3) \\)", "\\( [2, 3] \\)", "\\( (2, \\infty) \\)", "\\( (-\\infty, 3) \\)"], correctIndex: 0 }
+        ];
+
+        // --- GAME LOGIC ---
+        let currentQuestion = 0;
+        let userAnswers = new Array(quizData.length).fill(null);
+        let visitedQuestions = new Array(quizData.length).fill(false);
+        let isSubmitted = false;
+        let totalSeconds = quizData.length * 60; 
+        let timerInterval;
+
+        function init() {
+            visitedQuestions[0] = true;
+            renderNavGrid();
+            startTimer();
+            loadQuestion(0);
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                if(totalSeconds > 0 && !isSubmitted) {
+                    totalSeconds--;
+                    const m = Math.floor(totalSeconds / 60).toString().padStart(2,'0');
+                    const s = (totalSeconds % 60).toString().padStart(2,'0');
+                    document.getElementById('timer').innerText = `${m}:${s}`;
+                    if(totalSeconds === 0) submitQuiz();
+                }
+            }, 1000);
+        }
+
+        function loadQuestion(index) {
+            const data = quizData[index];
+            const labels = ['A', 'B', 'C', 'D'];
+            
+            // 1. Render Question and Options
+            document.getElementById('question-text').innerHTML = `<strong>Q${index + 1}.</strong> ${data.question}`;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            data.options.forEach((opt, i) => {
+                const btn = document.createElement('div');
+                btn.className = 'option-card';
+                if (userAnswers[index] === i) btn.classList.add('selected');
+                
+                if (isSubmitted) {
+                    btn.style.cursor = 'default';
+                    if (i === data.correctIndex) btn.classList.add('correct-answer');
+                    else if (userAnswers[index] === i) btn.classList.add('wrong-selected');
+                } else {
+                    btn.onclick = () => {
+                        userAnswers[currentQuestion] = i;
+                        loadQuestion(currentQuestion);
+                        renderNavGrid();
+                    };
+                }
+
+                btn.innerHTML = `
+                    <div class="option-badge">${labels[i]}</div>
+                    <div class="option-text">${opt}</div>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+
+            // 2. Feedback Logic (Not Answered)
+            const feedbackMsg = document.getElementById('feedback-msg');
+            if (isSubmitted) {
+                if (userAnswers[index] === null) {
+                    feedbackMsg.innerText = "Not Answered";
+                    feedbackMsg.className = "status-msg status-not-answered";
+                    feedbackMsg.style.display = "block";
+                } else {
+                    feedbackMsg.style.display = "none";
+                }
+            } else {
+                feedbackMsg.style.display = "none";
+            }
+
+            // 3. Handle Buttons
+            document.getElementById('prev-btn').disabled = index === 0;
+            const nextBtn = document.getElementById('next-btn');
+            
+            if (index === quizData.length - 1) {
+                if(isSubmitted) {
+                     nextBtn.innerText = "Results";
+                     // NO ALERT: Just scroll to score
+                     nextBtn.onclick = () => document.getElementById('score-card').scrollIntoView({behavior: 'smooth'});
+                } else {
+                     nextBtn.innerText = "Submit Quiz";
+                     nextBtn.onclick = submitQuiz;
+                }
+            } else {
+                nextBtn.innerText = "Next";
+                nextBtn.onclick = () => changeQuestion(1);
+            }
+
+            // 4. Trigger MathJax Rendering with Promise
+            if (window.MathJax && MathJax.startup) {
+                MathJax.startup.promise.then(() => {
+                    MathJax.typesetPromise([document.getElementById('quiz-content')]);
+                });
+            }
+        }
+
+        function changeQuestion(dir) {
+            const newIndex = currentQuestion + dir;
+            if (newIndex >= 0 && newIndex < quizData.length) {
+                currentQuestion = newIndex;
+                visitedQuestions[currentQuestion] = true;
+                loadQuestion(currentQuestion);
+                renderNavGrid();
+            }
+        }
+
+        function submitQuiz() {
+            isSubmitted = true;
+            clearInterval(timerInterval);
+            
+            let score = 0;
+            userAnswers.forEach((ans, i) => { if(ans === quizData[i].correctIndex) score++; });
+
+            const scoreCard = document.getElementById('score-card');
+            document.getElementById('final-score').innerText = score;
+            scoreCard.style.display = 'block';
+            scoreCard.scrollIntoView({ behavior: 'smooth' });
+
+            loadQuestion(currentQuestion);
+            renderNavGrid();
+        }
+
+        function renderNavGrid() {
+            const grid = document.getElementById('nav-grid');
+            grid.innerHTML = '';
+            quizData.forEach((_, i) => {
+                const item = document.createElement('div');
+                item.className = `nav-item ${i === currentQuestion ? 'current' : ''}`;
+                if (userAnswers[i] !== null) item.classList.add('attempted');
+                else if (visitedQuestions[i]) item.classList.add('viewed-unanswered');
+                
+                item.innerText = i + 1;
+                item.onclick = () => {
+                    currentQuestion = i;
+                    visitedQuestions[i] = true;
+                    loadQuestion(i);
+                    toggleDrawer();
+                };
+                grid.appendChild(item);
+            });
+        }
+
+        function toggleDrawer() {
+            document.getElementById('nav-drawer').classList.toggle('open');
+        }
+
+        // Initialize App
+        window.onload = init;
+
+    </script>
+</body>
+</html>
