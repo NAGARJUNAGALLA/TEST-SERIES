@@ -15,11 +15,10 @@
             --header-height: 70px;
         }
         .no-select {
-  -webkit-user-select: none; /* Safari */
-  -ms-user-select: none;     /* IE 10 and IE 11 */
-  user-select: none;         /* Standard syntax */
-}
-
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
 
         * {
             box-sizing: border-box;
@@ -257,10 +256,50 @@
             justify-content: center;
         }
 
+        /* --- NEW MODAL STYLES --- */
+        .modal-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(2px);
+        }
+        .modal-box {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 85%;
+            max-width: 320px;
+            animation: popIn 0.2s ease-out;
+        }
+        @keyframes popIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .modal-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 25px; color: #333; }
+        .modal-buttons { display: flex; gap: 15px; justify-content: center; }
+        
+        .btn-yes {
+            background: #f83061; color: white; border: none;
+            padding: 10px 25px; border-radius: 8px; cursor: pointer; font-weight: bold;
+            font-size: 1rem; flex: 1;
+        }
+        .btn-no {
+            background: #e2e8f0; color: #333; border: none;
+            padding: 10px 25px; border-radius: 8px; cursor: pointer; font-weight: bold;
+            font-size: 1rem; flex: 1;
+        }
+
         @media (max-width: 600px) {
             .icon-grid { grid-template-columns: repeat(3, 1fr); }
             a.card { width: 160px; }
-            .user-profile span { display: none; } /* Hide phone text on small mobile */
+            .user-profile span { display: none; }
         }
     </style>
 </head>
@@ -334,9 +373,10 @@
                 </div>
             </div>
         </div>
-        <div id="physics" class="tab-content active">
+
+        <div id="physics" class="tab-content">
             <div class="section-group">
-                <h3 class="section-header">Calculus Series</h3>
+                <h3 class="section-header">Physics Series</h3>
                 <div class="cards-container">
                     <a href="otts.html" class="card">
                         <div class="card-text">OTTs</div>
@@ -351,22 +391,64 @@
                 </div>
             </div>
         </div>
+        
+        </div> <div id="logoutModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title">Do you want to logout?</div>
+            <div class="modal-buttons">
+                <button class="btn-no" onclick="handleLogout(false)">No</button>
+                <button class="btn-yes" onclick="handleLogout(true)">Yes</button>
+            </div>
         </div>
+    </div>
 
     <script>
-        // Tab switching logic
+        // --- 1. Tab switching logic ---
         function openTab(tabId, element) {
+            // Hide all contents
             const contents = document.getElementsByClassName('tab-content');
             for (let i = 0; i < contents.length; i++) {
                 contents[i].classList.remove('active');
             }
+            // Deactivate all icons
             const icons = document.getElementsByClassName('icon-item');
             for (let i = 0; i < icons.length; i++) {
                 icons[i].classList.remove('active');
             }
+            // Show target content
             const target = document.getElementById(tabId);
             if(target) target.classList.add('active');
+            
+            // Activate clicked icon
             element.classList.add('active');
+        }
+
+        // --- 2. Back Button Logout Logic ---
+        
+        // Push a state immediately so we have a history entry to trap
+        history.pushState(null, null, location.href);
+
+        // Detect Back Button Click
+        window.onpopstate = function () {
+            const modal = document.getElementById('logoutModal');
+            modal.style.display = 'flex'; // Show modal
+        };
+
+        // Handle Yes/No buttons
+        function handleLogout(shouldLogout) {
+            const modal = document.getElementById('logoutModal');
+            
+            if (shouldLogout) {
+                // Yes clicked -> Go to Login Page
+                window.location.href = "index.html"; 
+            } else {
+                // No clicked -> Hide modal and stay
+                modal.style.display = 'none';
+                
+                // CRITICAL: We must push state again, otherwise the NEXT back click
+                // will just exit the page because the history stack is empty.
+                history.pushState(null, null, location.href);
+            }
         }
     </script>
 </body>
