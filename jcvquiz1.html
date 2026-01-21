@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JCV Study Center</title>
+    
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['\\(', '\\)']], displayMath: [['$$', '$$']] },
+            startup: { typeset: false }
+        };
+    </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #0088cc;
+            --header-text: #ffffff;
+            --bg-color: #ffffff;
+            --chat-bg: #87aadd;
+            --list-hover: #f5f5f5;
+            --bubble-bg: #ffffff;
+            --correct-color: #ecfaeb;
+            --wrong-color: #fceceb;
+            --badge-color: #00c73e;
+            --timer-bg: #ffffff;
+            --timer-text: #d63d3d;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; 
+        }
+
+        /* --- HEADER --- */
+        header {
+            background-color: var(--primary-color);
+            color: var(--header-text);
+            padding: 0 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 100;
+            height: 55px;
+            flex-shrink: 0; 
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 26px;
+            margin-right: 15px;
+            cursor: pointer;
+            display: none; 
+            padding: 0;
+        }
+
+        .header-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex-grow: 1;
+        }
+
+        .app-title {
+            font-size: 18px;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        .status-text {
+            font-size: 12px;
+            opacity: 0.9;
+            line-height: 1.2;
+        }
+
+        /* TIMER DISPLAY */
+        .timer-badge {
+            background: var(--timer-bg);
+            color: var(--primary-color);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-width: 60px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .timer-badge.low-time {
+            color: var(--timer-text);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* --- MAIN CONTAINER --- */
+        #main-container {
+            flex: 1; 
+            overflow-y: auto; 
+            position: relative;
+            background: var(--bg-color);
+            width: 100%;
+        }
+
+        /* --- LIST VIEW --- */
+        #subject-list-view { width: 100%; display: block; }
+        .subject-list { list-style: none; padding: 0; margin: 0; width: 100%; }
+        
+        .subject-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .subject-item:hover { background-color: var(--list-hover); }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .subject-info { flex-grow: 1; min-width: 0; }
+        .subject-name { font-weight: bold; font-size: 16px; color: #222; display: block; margin-bottom: 4px; }
+        .msg-preview { color: #888; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .meta-info { margin-left: 10px; min-width: 25px; display: flex; justify-content: flex-end; }
+        .unread-badge { background-color: var(--badge-color); color: white; border-radius: 12px; padding: 2px 9px; font-size: 12px; font-weight: bold; min-width: 18px; text-align: center; }
+        .done-check { color: var(--primary-color); font-size: 18px; display: none; }
+
+        /* --- QUIZ VIEW --- */
+        #quiz-view {
+            display: none;
+            background-color: var(--chat-bg);
+            background-image: radial-gradient(#9dbbd8 1px, transparent 1px);
+            background-size: 20px 20px;
+            min-height: 100%;
+            padding: 20px 10px;
+            padding-bottom: 80px;
+            box-sizing: border-box;
+        }
+
+        .quiz-bubble {
+            background: var(--bubble-bg);
+            border-radius: 12px 12px 12px 0;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin-left: auto; 
+            margin-right: auto;
+        }
+
+        .q-header { display: flex; align-items: flex-start; margin-bottom: 10px; }
+        .q-number { font-weight: bold; color: var(--primary-color); margin-right: 8px; }
+        .q-text { font-weight: 600; line-height: 1.4; flex: 1; }
+
+        .options-group { display: flex; flex-direction: column; gap: 8px; }
+        
+        .opt-label {
+            padding: 12px 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        
+        .radio-circle {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #bbb;
+            border-radius: 50%;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .opt-label input { display: none; }
+        .opt-label.correct { background: var(--correct-color); border-color: #46d959; color: #2b9f3a; }
+        .opt-label.correct .radio-circle { border-color: #46d959; background: #46d959; }
+        .opt-label.wrong { background: var(--wrong-color); border-color: #ff5e5e; color: #d63d3d; }
+        .opt-label.wrong .radio-circle { border-color: #ff5e5e; background: #ff5e5e; }
+
+        /* Locked state */
+        .quiz-bubble.locked { pointer-events: none; opacity: 0.9; }
+        .quiz-bubble.locked .opt-label:not(.correct):not(.wrong) { opacity: 0.5; }
+        
+        .scroll-target { scroll-margin-top: 80px; }
+
+        /* Time Up Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .modal-box {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            width: 85%;
+            max-width: 320px;
+        }
+        .modal-box h2 { color: #d63d3d; margin-top: 0; }
+        .modal-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            margin-top: 20px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <button class="back-btn" id="back-btn" onclick="goHome()">←</button>
+        <div class="header-info">
+            <div class="app-title" id="header-title">JCV STUDY CENTER</div>
+            <span class="status-text" id="header-subtitle">Loading...</span>
+        </div>
+        <div id="timer-display" class="timer-badge">--:--</div>
+    </header>
+
+    <div id="main-container">
+        <div id="loading-msg" style="padding:20px; text-align:center; color:#666;">Loading 100 Questions...</div>
+        <div id="subject-list-view"><ul class="subject-list" id="subject-ul"></ul></div>
+        <div id="quiz-view"></div>
+    </div>
+
+<script>
+    // --- 100 QUESTIONS DATABASE (5 Subjects x 20) ---
+    const db = {
+        subjects: [
+            // 1. FRACTIONS (MATHS)
+            {
+                id: 'math_frac', title: 'Fractions', icon: '➗', desc: 'Add, Subtract & Simplify',
+                questions: [
+                    { id: 1, text: "Calculate: \\( \\frac{1}{2} + \\frac{1}{2} \\)", options: ["1/2", "1", "1/4", "2"], correct: 1 },
+                    { id: 2, text: "Simplify: \\( \\frac{5}{10} \\)", options: ["1/5", "1/2", "2/5", "5/2"], correct: 1 },
+                    { id: 3, text: "What is \\( \\frac{3}{4} \\) as a decimal?", options: ["0.25", "0.50", "0.75", "0.80"], correct: 2 },
+                    { id: 4, text: "Which is an Improper Fraction?", options: ["2/3", "4/5", "7/4", "1/9"], correct: 2 },
+                    { id: 5, text: "Calculate: \\( \\frac{2}{3} \\times \\frac{3}{2} \\)", options: ["0", "1", "6/9", "4/9"], correct: 1 },
+                    { id: 6, text: "Equivalent fraction of \\( \\frac{1}{3} \\)?", options: ["2/6", "3/8", "4/9", "1/6"], correct: 0 },
+                    { id: 7, text: "Reciprocal of \\( \\frac{5}{7} \\)?", options: ["7/5", "-5/7", "1", "5/7"], correct: 0 },
+                    { id: 8, text: "Subtract: \\( 1 - \\frac{1}{4} \\)", options: ["1/4", "3/4", "1/2", "0"], correct: 1 },
+                    { id: 9, text: "Which is larger? \\( \\frac{1}{2} \\) or \\( \\frac{1}{3} \\)?", options: ["1/2", "1/3", "Equal", "None"], correct: 0 },
+                    { id: 10, text: "Mixed fraction for 1.5 is:", options: ["\\( 1\\frac{1}{5} \\)", "\\( 1\\frac{1}{2} \\)", "\\( 2\\frac{1}{2} \\)", "\\( 1\\frac{1}{4} \\)"], correct: 1 },
+                    { id: 11, text: "Numerator of \\( \\frac{4}{9} \\) is:", options: ["9", "4", "13", "5"], correct: 1 },
+                    { id: 12, text: "\\( \\frac{1}{2} \\div \\frac{1}{2} = ? \\)", options: ["1/4", "1", "0", "1/2"], correct: 1 },
+                    { id: 13, text: "Add: \\( \\frac{1}{5} + \\frac{2}{5} \\)", options: ["3/10", "3/5", "3/25", "1/5"], correct: 1 },
+                    { id: 14, text: "Value of \\( \\frac{0}{5} \\)?", options: ["5", "0", "Undefined", "1"], correct: 1 },
+                    { id: 15, text: "Value of \\( \\frac{5}{0} \\)?", options: ["5", "0", "Undefined", "1"], correct: 2 },
+                    { id: 16, text: "Convert 25% to fraction:", options: ["1/5", "1/4", "1/2", "1/10"], correct: 1 },
+                    { id: 17, text: "Simplify \\( \\frac{12}{16} \\)", options: ["2/3", "3/4", "4/5", "5/6"], correct: 1 },
+                    { id: 18, text: "Proper fraction has:", options: ["Num < Den", "Num > Den", "Num = Den", "None"], correct: 0 },
+                    { id: 19, text: "\\( \\frac{1}{2} \\) of 20 is:", options: ["5", "10", "15", "40"], correct: 1 },
+                    { id: 20, text: "Product of a number and its reciprocal is:", options: ["0", "1", "-1", "Infinite"], correct: 1 }
+                ]
+            },
+            // 2. COAL & PETROLEUM (CHEMISTRY)
+            {
+                id: 'chem_coal', title: 'Coal & Petroleum', icon: '🛢️', desc: 'Fossil Fuels & Resources',
+                questions: [
+                    { id: 1, text: "Coal and Petroleum are ___ resources.", options: ["Exhaustible", "Inexhaustible", "Renewable", "Man-made"], correct: 0 },
+                    { id: 2, text: "Slow process of conversion of dead vegetation into coal is:", options: ["Oxidation", "Carbonisation", "Reduction", "Refining"], correct: 1 },
+                    { id: 3, text: "Purest form of carbon?", options: ["Coal tar", "Coal gas", "Coke", "Petroleum"], correct: 2 },
+                    { id: 4, text: "Naphthalene balls are obtained from:", options: ["Coal tar", "Coke", "Coal gas", "Petrol"], correct: 0 },
+                    { id: 5, text: "Petroleum is also called:", options: ["White Gold", "Black Gold", "Blue Gold", "Red Gold"], correct: 1 },
+                    { id: 6, text: "Least polluting fuel for vehicles?", options: ["Petrol", "Diesel", "CNG", "Kerosene"], correct: 2 },
+                    { id: 7, text: "Main constituent of LPG?", options: ["Methane", "Butane", "Propane", "Ethane"], correct: 1 },
+                    { id: 8, text: "Separation of petroleum fractions is called:", options: ["Distillation", "Refining", "Carbonisation", "Mining"], correct: 1 },
+                    { id: 9, text: "Which is NOT a fossil fuel?", options: ["Coal", "Petroleum", "Natural Gas", "Wood"], correct: 3 },
+                    { id: 10, text: "Product used for surfacing roads:", options: ["Coke", "Bitumen", "Coal tar", "Petrol"], correct: 1 },
+                    { id: 11, text: "PCRA stands for Petroleum ____ Research Association.", options: ["Conservation", "Coal", "Car", "Control"], correct: 0 },
+                    { id: 12, text: "Candles are made from:", options: ["Paraffin wax", "Coal", "Coke", "Diesel"], correct: 0 },
+                    { id: 13, text: "Fuel used in jet aircrafts:", options: ["Petrol", "Kerosene", "Diesel", "CNG"], correct: 1 },
+                    { id: 14, text: "Natural gas is mainly:", options: ["Methane", "Butane", "Oxygen", "Hydrogen"], correct: 0 },
+                    { id: 15, text: "Petroleum is formed from organisms in the:", options: ["Air", "Sea", "Mountains", "Space"], correct: 1 },
+                    { id: 16, text: "Inexhaustible natural resource:", options: ["Coal", "Sunlight", "Petroleum", "Forests"], correct: 1 },
+                    { id: 17, text: "Vaseline is obtained from:", options: ["Coal", "Petroleum", "Plants", "Animals"], correct: 1 },
+                    { id: 18, text: "Burning of fossil fuels causes:", options: ["Global Warming", "Cooling", "Rain", "Forests"], correct: 0 },
+                    { id: 19, text: "Coke is used in manufacture of:", options: ["Steel", "Plastic", "Rubber", "Glass"], correct: 0 },
+                    { id: 20, text: "Dead organisms turn into petroleum under:", options: ["High P, High T", "Low P, Low T", "High P, Low T", "Air"], correct: 0 }
+                ]
+            },
+            // 3. FORCE (PHYSICS)
+            {
+                id: 'phys_force', title: 'Force', icon: '⚡', desc: 'Push, Pull & Pressure',
+                questions: [
+                    { id: 1, text: "A push or pull is called:", options: ["Pressure", "Force", "Friction", "Energy"], correct: 1 },
+                    { id: 2, text: "SI unit of Force?", options: ["Pascal", "Newton", "Joule", "Watt"], correct: 1 },
+                    { id: 3, text: "Force can change the ___ of an object.", options: ["Speed", "Shape", "Direction", "All of these"], correct: 3 },
+                    { id: 4, text: "Example of contact force:", options: ["Magnetic", "Gravitational", "Friction", "Electrostatic"], correct: 2 },
+                    { id: 5, text: "Pressure is defined as Force per unit ___.", options: ["Volume", "Area", "Length", "Time"], correct: 1 },
+                    { id: 6, text: "SI unit of Pressure?", options: ["Newton", "Pascal", "Joule", "Meter"], correct: 1 },
+                    { id: 7, text: "Friction always acts in ___ direction of motion.", options: ["Same", "Opposite", "Perpendicular", "Any"], correct: 1 },
+                    { id: 8, text: "Force exerted by muscles is:", options: ["Magnetic", "Muscular", "Electrostatic", "Friction"], correct: 1 },
+                    { id: 9, text: "Force exerted by the earth:", options: ["Gravity", "Magnetic", "Friction", "Tension"], correct: 0 },
+                    { id: 10, text: "To reduce friction, we use:", options: ["Sand", "Lubricants", "Rough surface", "Glue"], correct: 1 },
+                    { id: 11, text: "Liquid pressure increases with:", options: ["Depth", "Width", "Color", "Surface area"], correct: 0 },
+                    { id: 12, text: "Force exerted by a charged body:", options: ["Gravitational", "Electrostatic", "Muscular", "Friction"], correct: 1 },
+                    { id: 13, text: "Instrument to measure force:", options: ["Thermometer", "Spring Balance", "Barometer", "Speedometer"], correct: 1 },
+                    { id: 14, text: "Atmospheric pressure is measured by:", options: ["Barometer", "Manometer", "Thermometer", "Ruler"], correct: 0 },
+                    { id: 15, text: "Streamlined shape reduces:", options: ["Gravity", "Fluid Friction", "Weight", "Mass"], correct: 1 },
+                    { id: 16, text: "1 kg-wt is equal to:", options: ["9.8 N", "98 N", "0.98 N", "980 N"], correct: 0 },
+                    { id: 17, text: "Ideally, sliding friction is ___ than static friction.", options: ["Greater", "Less", "Equal", "Double"], correct: 1 },
+                    { id: 18, text: "Maglev trains use ___ force.", options: ["Friction", "Magnetic", "Muscular", "Electrostatic"], correct: 1 },
+                    { id: 19, text: "Sharp knife cuts better because area is ___.", options: ["Less", "More", "Same", "Zero"], correct: 0 },
+                    { id: 20, text: "Opening a door involves:", options: ["Contact Force", "Non-contact Force", "Magnetic Force", "Gravity"], correct: 0 }
+                ]
+            },
+            // 4. TENSES (ENGLISH)
+            {
+                id: 'eng_tense', title: 'English Tenses', icon: '📝', desc: 'Past, Present & Future',
+                questions: [
+                    { id: 1, text: "He ___ to school everyday.", options: ["go", "goes", "going", "gone"], correct: 1 },
+                    { id: 2, text: "Look! It ___ raining.", options: ["is", "was", "were", "had"], correct: 0 },
+                    { id: 3, text: "I ___ finished my work just now.", options: ["has", "have", "had", "did"], correct: 1 },
+                    { id: 4, text: "She ___ reading since morning.", options: ["is", "has been", "was", "have been"], correct: 1 },
+                    { id: 5, text: "Identify the tense: 'I wrote a letter'.", options: ["Simple Present", "Simple Past", "Future", "Present Perfect"], correct: 1 },
+                    { id: 6, text: "They ___ playing football yesterday.", options: ["are", "were", "have", "will"], correct: 1 },
+                    { id: 7, text: "The train ___ before we reached the station.", options: ["left", "has left", "had left", "leaving"], correct: 2 },
+                    { id: 8, text: "I ___ visit Delhi tomorrow.", options: ["will", "did", "had", "was"], correct: 0 },
+                    { id: 9, text: "By next year, I ___ graduated.", options: ["will", "will have", "had", "am"], correct: 1 },
+                    { id: 10, text: "Water ___ at 100 degrees Celsius.", options: ["boil", "boils", "boiled", "boiling"], correct: 1 },
+                    { id: 11, text: "While I was sleeping, the phone ___.", options: ["ring", "rang", "rings", "rung"], correct: 1 },
+                    { id: 12, text: "He usually ___ coffee.", options: ["drink", "drinks", "drank", "drunk"], correct: 1 },
+                    { id: 13, text: "I ___ him for ten years.", options: ["know", "knew", "have known", "am knowing"], correct: 2 },
+                    { id: 14, text: "She ___ to London next week.", options: ["go", "is going", "gone", "went"], correct: 1 },
+                    { id: 15, text: "Simple Past of 'Buy' is:", options: ["Buyed", "Bought", "Buying", "Buys"], correct: 1 },
+                    { id: 16, text: "Identify: 'He will be sleeping'.", options: ["Future Simple", "Future Continuous", "Future Perfect", "Past"], correct: 1 },
+                    { id: 17, text: "They ___ not like apples.", options: ["does", "do", "has", "are"], correct: 1 },
+                    { id: 18, text: "We ___ waiting for you.", options: ["are", "do", "did", "have"], correct: 0 },
+                    { id: 19, text: "When I met him, he ___ working.", options: ["is", "was", "has", "will"], correct: 1 },
+                    { id: 20, text: "She said she ___ busy.", options: ["is", "was", "were", "have"], correct: 1 }
+                ]
+            },
+            // 5. NATIONAL SYMBOLS (GK)
+            {
+                id: 'gk_sym', title: 'National Symbols', icon: '🇮🇳', desc: 'India GK Quiz',
+                questions: [
+                    { id: 1, text: "National Bird of India?", options: ["Peacock", "Eagle", "Parrot", "Swan"], correct: 0 },
+                    { id: 2, text: "National Animal of India?", options: ["Lion", "Tiger", "Elephant", "Leopard"], correct: 1 },
+                    { id: 3, text: "National Flower of India?", options: ["Rose", "Lotus", "Lily", "Jasmine"], correct: 1 },
+                    { id: 4, text: "National Anthem was written by:", options: ["Bankim Chandra", "Rabindranath Tagore", "Premchand", "Nehru"], correct: 1 },
+                    { id: 5, text: "National Song of India?", options: ["Jana Gana Mana", "Vande Mataram", "Sare Jahan Se Acha", "Maa Tujhe Salaam"], correct: 1 },
+                    { id: 6, text: "National Emblem is adapted from:", options: ["Lion Capital of Ashoka", "Sanchi Stupa", "Red Fort", "Ajanta"], correct: 0 },
+                    { id: 7, text: "National Tree of India?", options: ["Neem", "Peepal", "Banyan", "Mango"], correct: 2 },
+                    { id: 8, text: "National Fruit of India?", options: ["Apple", "Banana", "Mango", "Orange"], correct: 2 },
+                    { id: 9, text: "Ratio of length to width of Indian Flag?", options: ["2:3", "3:2", "1:1", "4:3"], correct: 1 },
+                    { id: 10, text: "Number of spokes in Ashoka Chakra?", options: ["20", "22", "24", "26"], correct: 2 },
+                    { id: 11, text: "National Currency symbol?", options: ["$", "€", "₹", "£"], correct: 2 },
+                    { id: 12, text: "National Aquatic Animal?", options: ["River Dolphin", "Shark", "Whale", "Turtle"], correct: 0 },
+                    { id: 13, text: "National Heritage Animal?", options: ["Lion", "Elephant", "Horse", "Cow"], correct: 1 },
+                    { id: 14, text: "National River of India?", options: ["Yamuna", "Ganga", "Brahmaputra", "Narmada"], correct: 1 },
+                    { id: 15, text: "Motto on National Emblem:", options: ["Jai Hind", "Satyameva Jayate", "Vande Mataram", "Inquilab"], correct: 1 },
+                    { id: 16, text: "National Reptile of India?", options: ["Lizard", "King Cobra", "Crocodile", "Python"], correct: 1 },
+                    { id: 17, text: "Playing time of National Anthem?", options: ["50 sec", "52 sec", "54 sec", "60 sec"], correct: 1 },
+                    { id: 18, text: "National Calendar is based on?", options: ["Gregorian", "Saka Era", "Vikram Samvat", "Hijri"], correct: 1 },
+                    { id: 19, text: "Color of the Chakra in the flag?", options: ["Black", "Blue", "Navy Blue", "Sky Blue"], correct: 2 },
+                    { id: 20, text: "Number of lions in National Emblem (Total)?", options: ["3", "4", "2", "5"], correct: 1 }
+                ]
+            }
+        ]
+    };
+
+    // --- DOM Elements ---
+    const viewList = document.getElementById('subject-list-view');
+    const viewQuiz = document.getElementById('quiz-view');
+    const headerTitle = document.getElementById('header-title');
+    const headerSub = document.getElementById('header-subtitle');
+    const backBtn = document.getElementById('back-btn');
+    const mainContainer = document.getElementById('main-container');
+    const loadingMsg = document.getElementById('loading-msg');
+    const timerDisplay = document.getElementById('timer-display');
+
+    let globalTimerInterval = null;
+    const GLOBAL_TIMER_KEY = 'jcv_global_timer_100q';
+    const GLOBAL_EXAM_DONE_KEY = 'jcv_exam_done_100q';
+
+    // --- INITIALIZATION ---
+    window.addEventListener('DOMContentLoaded', () => {
+        try {
+            initApp();
+            loadingMsg.style.display = 'none';
+        } catch (e) {
+            loadingMsg.innerText = "Error loading data. Check console.";
+            console.error("Initialization Error:", e);
+        }
+    });
+
+    function initApp() {
+        startGlobalTimer();
+        goHome(); 
+    }
+
+    // --- GLOBAL TIMER LOGIC ---
+    function startGlobalTimer() {
+        if (localStorage.getItem(GLOBAL_EXAM_DONE_KEY) === 'true') {
+            timerDisplay.textContent = "00:00";
+            return;
+        }
+
+        // Calculate Total Time (1 min per question for ALL questions)
+        let totalQuestions = 0;
+        db.subjects.forEach(s => totalQuestions += s.questions.length);
+        const totalSeconds = totalQuestions * 60;
+
+        // Get saved time or init
+        let timeLeft = localStorage.getItem(GLOBAL_TIMER_KEY);
+        if (timeLeft === null) {
+            timeLeft = totalSeconds;
+        } else {
+            timeLeft = parseInt(timeLeft);
+        }
+
+        updateTimerUI(timeLeft);
+
+        if (timeLeft <= 0) {
+            handleGlobalTimeUp();
+            return;
+        }
+
+        // Start Interval
+        globalTimerInterval = setInterval(() => {
+            timeLeft--;
+            localStorage.setItem(GLOBAL_TIMER_KEY, timeLeft);
+            updateTimerUI(timeLeft);
+
+            if (timeLeft <= 0) {
+                clearInterval(globalTimerInterval);
+                handleGlobalTimeUp();
+            }
+        }, 1000);
+    }
+
+    function updateTimerUI(seconds) {
+        if (seconds < 0) seconds = 0;
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        timerDisplay.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        
+        if (seconds < 300) { // Red warning if < 5 mins
+            timerDisplay.classList.add('low-time');
+        } else {
+            timerDisplay.classList.remove('low-time');
+        }
+    }
+
+    function handleGlobalTimeUp() {
+        localStorage.setItem(GLOBAL_EXAM_DONE_KEY, 'true');
+        timerDisplay.textContent = "00:00";
+        
+        // Force go home and show modal
+        viewQuiz.style.display = 'none';
+        viewList.style.display = 'block';
+        backBtn.style.display = 'none';
+        headerTitle.innerText = "JCV STUDY CENTER";
+        
+        const stats = calculateGlobalScore();
+        headerSub.innerHTML = `Total Score: <b>${stats.correct} / ${stats.total}</b>`;
+        renderSubjectList();
+
+        // Show Modal
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-box">
+                <h2>⏰ Time's Up!</h2>
+                <p>All questions have been submitted.</p>
+                <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
+                <p><b>Final Score: ${stats.correct} / ${stats.total}</b></p>
+                <button class="modal-btn" onclick="this.closest('.modal-overlay').remove()">View Answers</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    function calculateGlobalScore() {
+        let correct = 0;
+        let total = 0;
+        db.subjects.forEach(sub => {
+            total += sub.questions.length;
+            const progress = getProgress(sub.id);
+            sub.questions.forEach(q => {
+                if(progress[q.id] !== undefined && progress[q.id] === q.correct) {
+                    correct++;
+                }
+            });
+        });
+        return { correct, total };
+    }
+
+    // --- NAVIGATION ---
+    function goHome() {
+        viewQuiz.style.display = 'none';
+        viewList.style.display = 'block';
+        backBtn.style.display = 'none';
+
+        headerTitle.innerText = "JCV STUDY CENTER";
+        const stats = calculateGlobalScore();
+        headerSub.innerHTML = `Total Score: <b>${stats.correct} / ${stats.total}</b>`;
+        
+        renderSubjectList();
+        mainContainer.scrollTo(0, 0);
+    }
+
+    function openChat(subjectId) {
+        const subject = db.subjects.find(s => s.id === subjectId);
+        if(!subject) return;
+
+        viewList.style.display = 'none';
+        viewQuiz.style.display = 'block';
+        backBtn.style.display = 'block';
+        
+        headerTitle.innerText = subject.title;
+        updateChatHeaderScore(subject);
+        renderQuestions(subject);
+    }
+
+    function renderSubjectList() {
+        const ul = document.getElementById('subject-ul');
+        ul.innerHTML = '';
+        const isExamDone = localStorage.getItem(GLOBAL_EXAM_DONE_KEY) === 'true';
+
+        db.subjects.forEach(sub => {
+            const li = document.createElement('li');
+            li.className = 'subject-item';
+            li.onclick = () => openChat(sub.id);
+
+            const progress = getProgress(sub.id);
+            const total = sub.questions.length;
+            const attempted = Object.keys(progress).length;
+            const remaining = total - attempted;
+
+            let metaHtml = '';
+            if (isExamDone) {
+                 metaHtml = `<div class="done-check" style="display:block">🔒</div>`;
+            } else {
+                 metaHtml = remaining > 0 
+                    ? `<div class="unread-badge">${remaining}</div>` 
+                    : `<div class="done-check" style="display:block">✓</div>`;
+            }
+
+            li.innerHTML = `
+                <div class="avatar">${sub.icon}</div>
+                <div class="subject-info">
+                    <span class="subject-name">${sub.title}</span>
+                    <div class="msg-preview">${sub.desc}</div>
+                </div>
+                <div class="meta-info">${metaHtml}</div>
+            `;
+            ul.appendChild(li);
+        });
+    }
+
+    // --- QUIZ RENDER ---
+    function renderQuestions(subject) {
+        viewQuiz.innerHTML = ''; 
+        const progress = getProgress(subject.id);
+        const isExamDone = localStorage.getItem(GLOBAL_EXAM_DONE_KEY) === 'true';
+        let firstUnansweredId = null;
+
+        subject.questions.forEach((q, idx) => {
+            const qUniqueId = `${subject.id}_q${q.id}`;
+            const savedAnswer = progress[q.id];
+            const isAnswered = savedAnswer !== undefined;
+
+            if (!isAnswered && firstUnansweredId === null) {
+                firstUnansweredId = qUniqueId;
+            }
+
+            const bubble = document.createElement('div');
+            // Lock if Exam is done OR if specific question is answered
+            const lockedClass = (isExamDone || isAnswered) ? 'locked' : '';
+            bubble.className = `quiz-bubble ${lockedClass} scroll-target`;
+            bubble.id = qUniqueId;
+
+            // Header
+            const qHeader = document.createElement('div');
+            qHeader.className = 'q-header';
+            qHeader.innerHTML = `<span class="q-number">Q${idx+1}.</span> <span class="q-text">${q.text}</span>`;
+            bubble.appendChild(qHeader);
+
+            // Options
+            const optGroup = document.createElement('div');
+            optGroup.className = 'options-group';
+
+            q.options.forEach((optText, optIdx) => {
+                const label = document.createElement('label');
+                label.className = 'opt-label';
+
+                // Color Logic
+                if (isAnswered || isExamDone) {
+                    // Show Correct Answer ALWAYS if exam done or answered
+                    if (optIdx === q.correct) label.classList.add('correct');
+                    // Show Wrong selection
+                    if (savedAnswer === optIdx && savedAnswer !== q.correct) label.classList.add('wrong');
+                }
+
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = qUniqueId;
+                if (savedAnswer === optIdx) radio.checked = true;
+                
+                // Only allow click if NOT locked
+                if (!isExamDone && !isAnswered) {
+                    radio.addEventListener('change', () => {
+                        handleAnswer(subject, q.id, optIdx, q.correct, bubble, optGroup);
+                    });
+                } else {
+                    radio.disabled = true;
+                }
+
+                label.innerHTML = `<div class="radio-circle"></div> <span>${optText}</span>`;
+                label.prepend(radio);
+                optGroup.appendChild(label);
+            });
+
+            bubble.appendChild(optGroup);
+            viewQuiz.appendChild(bubble);
+        });
+
+        // MathJax & Scroll
+        if (window.MathJax) {
+            MathJax.typesetPromise([viewQuiz]).then(() => {
+                if(!isExamDone) scrollToTarget(firstUnansweredId);
+            });
+        } else {
+            if(!isExamDone) scrollToTarget(firstUnansweredId);
+        }
+    }
+
+    function scrollToTarget(targetId) {
+        if (targetId) {
+            setTimeout(() => {
+                const el = document.getElementById(targetId);
+                if(el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+    }
+
+    function handleAnswer(subject, questionId, selectedIdx, correctIdx, bubbleEl, optGroupEl) {
+        saveProgress(subject.id, questionId, selectedIdx);
+        bubbleEl.classList.add('locked');
+
+        const labels = optGroupEl.querySelectorAll('.opt-label');
+        labels[correctIdx].classList.add('correct'); 
+
+        if (selectedIdx !== correctIdx) {
+            labels[selectedIdx].classList.add('wrong');
+            if(navigator.vibrate) navigator.vibrate(200);
+        }
+        updateChatHeaderScore(subject);
+    }
+
+    function updateChatHeaderScore(subject) {
+        const progress = getProgress(subject.id);
+        let score = 0;
+        subject.questions.forEach(q => {
+            if (progress[q.id] !== undefined && progress[q.id] === q.correct) score++;
+        });
+        headerSub.innerHTML = `Score: <b>${score} / ${subject.questions.length}</b>`;
+    }
+
+    // --- STORAGE ---
+    function getProgress(subjectId) {
+        const key = `jcv_progress_${subjectId}`;
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : {};
+    }
+
+    function saveProgress(subjectId, questionId, answerIdx) {
+        const key = `jcv_progress_${subjectId}`;
+        const data = getProgress(subjectId);
+        data[questionId] = answerIdx;
+        localStorage.setItem(key, JSON.stringify(data));
+    }
+</script>
+</body>
+</html>
