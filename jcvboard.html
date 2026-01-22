@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SlideGen - Compact</title>
+    <title>SlideGen - Vertical Studio</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     
@@ -28,11 +28,11 @@
             display: flex;
         }
 
-        /* --- Sidebar Toggle (Smaller) --- */
+        /* --- Sidebar Toggle --- */
         .toggle-btn {
             position: absolute; top: 15px; left: 15px;
             background: white; border: 1px solid #ddd;
-            width: 36px; height: 36px; border-radius: 8px; /* Compact */
+            width: 36px; height: 36px; border-radius: 8px;
             cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             z-index: 1000; display: flex; align-items: center; justify-content: center;
             color: #333; font-size: 1.1rem;
@@ -99,7 +99,7 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.15); background: white; 
         }
 
-        /* --- FIXED BOTTOM BAR --- */
+        /* --- FIXED BOTTOM BAR (Creation) --- */
         .bottom-bar {
             background: white; 
             border-top: 1px solid #ddd;
@@ -117,58 +117,94 @@
         .slide-counter { font-weight: 600; min-width: 50px; text-align: center; font-size: 0.9rem; }
         .bottom-bar .btn { width: auto; padding: 10px 16px; margin: 0; font-size: 0.9rem; }
 
-        /* --- PRESENTATION TOOLBAR (COMPACT) --- */
+        /* --- VERTICAL PRESENTATION TOOLBAR --- */
         .presentation-bar {
             display: none; 
             position: fixed;
-            bottom: 80px; /* Positioned slightly higher */
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.95);
-            padding: 6px 12px; /* Reduced Padding */
-            border-radius: 40px;
-            z-index: 99999;
-            align-items: center;
-            gap: 6px; /* Tighter Gap */
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            /* Center Vertically on the Right */
+            top: 50%;
+            right: 15px; 
+            transform: translateY(-50%);
             
-            /* Horizontal Scroll Logic */
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            max-width: 95vw;
-            width: auto;
-            white-space: nowrap;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 8px; /* Vertical padding */
+            border-radius: 30px;
+            z-index: 99999;
+            
+            /* Vertical Layout */
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            
+            box-shadow: -5px 0 20px rgba(0,0,0,0.3);
+            
+            /* Scroll properties */
+            max-height: 85vh; /* Max height to fit screen */
+            overflow-y: auto;
+            overflow-x: hidden;
+            
+            backdrop-filter: blur(5px);
             scrollbar-width: none; 
         }
         .presentation-bar::-webkit-scrollbar { display: none; }
 
-        /* Compact Buttons */
+        /* Compact Vertical Buttons */
         .presentation-bar .btn {
             background: #f3f4f6; color: #333; border: 1px solid #ddd;
-            margin: 0; padding: 6px 10px; font-size: 0.8rem; border-radius: 12px; /* Smaller */
+            margin: 0; 
+            padding: 0;
+            width: 34px; height: 34px; /* Square shape */
+            font-size: 0.85rem; 
+            border-radius: 50%; /* Circle buttons look better in vertical bar */
             flex-shrink: 0;
-            min-height: 28px;
+            display: flex; align-items: center; justify-content: center;
         }
         .presentation-bar .btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .presentation-bar .btn.danger { background: #fee2e2; color: #ef4444; border-color: #fee2e2; }
         
+        /* Recording Animation */
         .btn.recording {
             background-color: #ef4444; color: white; border-color: #ef4444;
             animation: pulse 1.5s infinite;
         }
         @keyframes pulse {
             0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+            70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
             100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
 
-        /* --- Circular Toggle Button (Smaller) --- */
+        /* Color Picker in Vertical Bar */
+        .presentation-bar input[type="color"] {
+            width: 30px; height: 30px; 
+            border-radius: 50%; overflow: hidden; padding: 0; border: none;
+            flex-shrink: 0; cursor: pointer;
+        }
+
+        /* Slider in Vertical Bar */
+        .pen-slider { 
+            width: 40px; 
+            height: 6px; 
+            flex-shrink: 0; 
+            margin: 5px 0;
+        }
+        
+        /* Horizontal divider becomes width of bar */
+        .divider { 
+            width: 80%; 
+            height: 1px; 
+            background: #ccc; 
+            margin: 4px 0; 
+            flex-shrink: 0; 
+        }
+
+        /* --- Circular Toggle Button (Bottom Center) --- */
         .present-toggle {
             display: none;
             position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            width: 42px; height: 42px; /* Smaller */
+            width: 40px; height: 40px;
             background: rgba(255,255,255,0.3);
             border-radius: 50%;
             border: 2px solid rgba(255,255,255,0.6);
@@ -179,7 +215,7 @@
             backdrop-filter: blur(4px);
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             transition: all 0.2s;
         }
         .present-toggle:hover { background: rgba(255,255,255,0.5); transform: translateX(-50%) scale(1.1); }
@@ -189,9 +225,6 @@
             background-color: #ef4444; border-color: #ef4444; opacity: 1;
             animation: pulse 1.5s infinite;
         }
-
-        .pen-slider { width: 50px; flex-shrink: 0; }
-        .divider { width: 1px; height: 20px; background: #ccc; margin: 0 2px; flex-shrink: 0; }
 
         body.presentation-mode { background-color: #000; }
         body.presentation-mode .sidebar,
@@ -278,26 +311,27 @@
     <button class="present-toggle" id="presentToggle" onclick="togglePresentationBar()" title="Show/Hide Toolbar">🛠</button>
 
     <div class="presentation-bar" id="presentationBar">
-        <button class="btn" onclick="prevSlide()">❮</button>
-        <button class="btn" onclick="nextSlide()">❯</button>
+        <button class="btn" onclick="prevSlide()">▲</button>
+        <button class="btn" onclick="nextSlide()">▼</button>
         <div class="divider"></div>
         
         <button class="btn" id="btnRec" onclick="toggleRecording()" title="Record">🔴</button>
         <div class="divider"></div>
 
-        <button class="btn" id="btnNormal" onclick="setPenMode('normal')">🖊️</button>
-        <button class="btn" id="btnCursive" onclick="setPenMode('cursive')" style="font-family:'Pacifico';">f</button>
-        <button class="btn" id="btnEraser" onclick="setEraserMode()">🧹</button>
-        <input type="range" class="pen-slider" min="1" max="30" value="3" oninput="updatePenSize(this.value)">
-        <input type="color" id="presentPenColor" value="#ff0000" onchange="changePenColor(this.value)">
+        <button class="btn" id="btnNormal" onclick="setPenMode('normal')" title="Pen">🖊️</button>
+        <button class="btn" id="btnCursive" onclick="setPenMode('cursive')" title="Cursive" style="font-family:'Pacifico'; font-size:0.7rem;">f</button>
+        <button class="btn" id="btnEraser" onclick="setEraserMode()" title="Eraser">🧹</button>
+        
+        <input type="range" class="pen-slider" min="1" max="30" value="3" oninput="updatePenSize(this.value)" title="Size">
+        <input type="color" id="presentPenColor" value="#ff0000" onchange="changePenColor(this.value)" title="Color">
         
         <div class="divider"></div>
-        <button class="btn" onclick="undoInk()">↩️</button>
-        <button class="btn" onclick="redoInk()">↪️</button>
+        <button class="btn" onclick="undoInk()" title="Undo">↩️</button>
+        <button class="btn" onclick="redoInk()" title="Redo">↪️</button>
         
         <div class="divider"></div>
-        <button class="btn" onclick="togglePresentationBar()">⬇</button>
-        <button class="btn danger" onclick="endPresentation()">Exit</button>
+        <button class="btn" onclick="togglePresentationBar()" title="Hide">➡</button>
+        <button class="btn danger" onclick="endPresentation()" title="Exit">❌</button>
     </div>
 
     <script>
@@ -329,10 +363,8 @@
             const toggle = document.getElementById('presentToggle');
             
             if (!isRecording) {
-                // START Recording
                 try {
                     const canvasStream = document.querySelector('canvas').captureStream(30);
-                    
                     let audioStream;
                     try {
                         audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -361,10 +393,9 @@
                     btn.innerText = "⬛"; 
                     toggle.classList.add('recording');
 
-                    // KEEP-ALIVE LOOP (Fixes audio sync)
+                    // KEEP-ALIVE LOOP
                     recordingLoop();
 
-                    // RE-ENTER FULLSCREEN if needed
                     if (!document.fullscreenElement) {
                         document.documentElement.requestFullscreen().catch(e=>{});
                     }
@@ -373,7 +404,6 @@
                     alert("Recording failed: " + err.message);
                 }
             } else {
-                // STOP Recording
                 mediaRecorder.stop();
                 isRecording = false;
                 btn.classList.remove('recording');
@@ -385,7 +415,7 @@
 
         function recordingLoop() {
             if (isRecording) {
-                canvas.renderAll(); // Force re-render to keep video stream alive
+                canvas.renderAll(); 
                 requestAnimationFrame(recordingLoop);
             }
         }
@@ -519,6 +549,7 @@
                 document.documentElement.requestFullscreen().catch(e => console.log(e));
             }
             
+            // Show Bar & Toggle Button
             document.getElementById('presentationBar').style.display = 'flex';
             document.getElementById('presentToggle').classList.add('active');
             
