@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SlideGen - Sync Fixed</title>
+    <title>SlideGen - Compact</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     
@@ -28,14 +28,14 @@
             display: flex;
         }
 
-        /* --- Sidebar Toggle --- */
+        /* --- Sidebar Toggle (Smaller) --- */
         .toggle-btn {
             position: absolute; top: 15px; left: 15px;
             background: white; border: 1px solid #ddd;
-            width: 44px; height: 44px; border-radius: 8px;
+            width: 36px; height: 36px; border-radius: 8px; /* Compact */
             cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             z-index: 1000; display: flex; align-items: center; justify-content: center;
-            color: #333; font-size: 1.2rem;
+            color: #333; font-size: 1.1rem;
         }
 
         /* --- Sidebar --- */
@@ -44,7 +44,7 @@
             background-color: white;
             border-right: 1px solid #ddd;
             display: flex; flex-direction: column;
-            padding: 20px; padding-top: 70px;
+            padding: 20px; padding-top: 60px;
             box-shadow: 2px 0 5px rgba(0,0,0,0.05);
             z-index: 900; transition: margin-left 0.3s ease;
             height: 100%;
@@ -59,23 +59,23 @@
             .sidebar.hidden { transform: translateX(-100%); margin-left: 0; }
         }
 
-        .brand { position: absolute; top: 20px; left: 70px; font-size: 1.2rem; font-weight: bold; color: var(--primary); }
-        .tool-group { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-        .tool-group h3 { font-size: 0.8rem; text-transform: uppercase; color: #888; margin-bottom: 10px; }
+        .brand { position: absolute; top: 20px; left: 60px; font-size: 1.1rem; font-weight: bold; color: var(--primary); }
+        .tool-group { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .tool-group h3 { font-size: 0.75rem; text-transform: uppercase; color: #888; margin-bottom: 8px; }
 
         .btn {
-            display: flex; align-items: center; width: 100%; padding: 12px;
-            margin-bottom: 8px; background: white; border: 1px solid #e5e7eb;
-            border-radius: 8px; cursor: pointer; font-size: 0.95rem; color: #374151;
+            display: flex; align-items: center; width: 100%; padding: 10px;
+            margin-bottom: 6px; background: white; border: 1px solid #e5e7eb;
+            border-radius: 6px; cursor: pointer; font-size: 0.9rem; color: #374151;
             justify-content: center; user-select: none;
         }
         .btn:active { transform: scale(0.98); }
         .btn.primary { background-color: var(--primary); color: white; border: none; }
         .btn.danger { color: #ef4444; border-color: #fee2e2; }
 
-        .style-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.9rem; color: #555; }
-        select { width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; background: #f8fafc; margin-bottom: 8px; }
-        input[type="color"] { border: none; width: 35px; height: 35px; cursor: pointer; background: none; padding: 0; }
+        .style-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.85rem; color: #555; }
+        select { width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; background: #f8fafc; margin-bottom: 8px; font-size: 0.9rem; }
+        input[type="color"] { border: none; width: 30px; height: 30px; cursor: pointer; background: none; padding: 0; }
         input[type="file"] { display: none; }
 
         /* --- Workspace --- */
@@ -117,20 +117,20 @@
         .slide-counter { font-weight: 600; min-width: 50px; text-align: center; font-size: 0.9rem; }
         .bottom-bar .btn { width: auto; padding: 10px 16px; margin: 0; font-size: 0.9rem; }
 
-        /* --- PRESENTATION TOOLBAR --- */
+        /* --- PRESENTATION TOOLBAR (COMPACT) --- */
         .presentation-bar {
             display: none; 
             position: fixed;
-            bottom: 90px; /* Higher up */
+            bottom: 80px; /* Positioned slightly higher */
             left: 50%;
             transform: translateX(-50%);
             background: rgba(255, 255, 255, 0.95);
-            padding: 10px 20px;
-            border-radius: 50px;
+            padding: 6px 12px; /* Reduced Padding */
+            border-radius: 40px;
             z-index: 99999;
             align-items: center;
-            gap: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            gap: 6px; /* Tighter Gap */
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
             
             /* Horizontal Scroll Logic */
             flex-wrap: nowrap;
@@ -142,10 +142,12 @@
         }
         .presentation-bar::-webkit-scrollbar { display: none; }
 
+        /* Compact Buttons */
         .presentation-bar .btn {
             background: #f3f4f6; color: #333; border: 1px solid #ddd;
-            margin: 0; padding: 8px 14px; font-size: 0.85rem; border-radius: 20px;
+            margin: 0; padding: 6px 10px; font-size: 0.8rem; border-radius: 12px; /* Smaller */
             flex-shrink: 0;
+            min-height: 28px;
         }
         .presentation-bar .btn.active { background: var(--primary); color: white; border-color: var(--primary); }
         
@@ -155,23 +157,23 @@
         }
         @keyframes pulse {
             0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+            70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
             100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
 
-        /* --- Circular Toggle Button (Restored Size) --- */
+        /* --- Circular Toggle Button (Smaller) --- */
         .present-toggle {
             display: none;
             position: fixed;
-            bottom: 25px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            width: 50px; height: 50px;
-            background: rgba(255,255,255,0.25);
+            width: 42px; height: 42px; /* Smaller */
+            background: rgba(255,255,255,0.3);
             border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.5);
+            border: 2px solid rgba(255,255,255,0.6);
             color: white;
-            font-size: 1.4rem;
+            font-size: 1.2rem;
             cursor: pointer;
             z-index: 100000;
             backdrop-filter: blur(4px);
@@ -180,17 +182,16 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             transition: all 0.2s;
         }
-        .present-toggle:hover { background: rgba(255,255,255,0.4); transform: translateX(-50%) scale(1.1); }
+        .present-toggle:hover { background: rgba(255,255,255,0.5); transform: translateX(-50%) scale(1.1); }
         .present-toggle.active { background: var(--primary); border-color: var(--primary); color: white; opacity: 1; }
         
-        /* Pulse toggle when recording and bar hidden */
         .present-toggle.recording {
             background-color: #ef4444; border-color: #ef4444; opacity: 1;
             animation: pulse 1.5s infinite;
         }
 
-        .pen-slider { width: 70px; flex-shrink: 0; }
-        .divider { width: 1px; height: 25px; background: #ccc; margin: 0 4px; flex-shrink: 0; }
+        .pen-slider { width: 50px; flex-shrink: 0; }
+        .divider { width: 1px; height: 20px; background: #ccc; margin: 0 2px; flex-shrink: 0; }
 
         body.presentation-mode { background-color: #000; }
         body.presentation-mode .sidebar,
@@ -241,7 +242,7 @@
             <button class="btn" onclick="document.getElementById('objImgInput').click()">🖼️ Image</button>
             <input type="file" id="objImgInput" accept="image/*" onchange="addObjImage(this)">
             
-            <h3 style="margin-top:15px;">Background</h3>
+            <h3 style="margin-top:10px;">Background</h3>
             <div class="style-row">
                 <input type="color" onchange="setSolidBg(this.value)" title="Solid Color">
                 <button class="btn" style="width:auto; margin:0; flex:1;" onclick="document.getElementById('bgImgInput').click()">🌄 BG Image</button>
@@ -322,28 +323,26 @@
         canvas.freeDrawingBrush.width = 3;
         canvas.freeDrawingBrush.color = "#ff0000";
 
-        // --- Recording Logic with Audio Fix ---
+        // --- Recording Logic ---
         async function toggleRecording() {
             const btn = document.getElementById('btnRec');
             const toggle = document.getElementById('presentToggle');
             
             if (!isRecording) {
+                // START Recording
                 try {
-                    // 1. Get Streams
                     const canvasStream = document.querySelector('canvas').captureStream(30);
                     
                     let audioStream;
                     try {
                         audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     } catch (e) {
-                        alert("Mic unavailable (Check permissions). Recording video only.");
+                        alert("Mic unavailable. Recording video only.");
                     }
 
-                    // 2. Combine
                     const tracks = [...canvasStream.getVideoTracks(), ...(audioStream ? audioStream.getAudioTracks() : [])];
                     const combinedStream = new MediaStream(tracks);
 
-                    // 3. Recorder
                     let options = { mimeType: 'video/webm;codecs=vp9' };
                     if (MediaRecorder.isTypeSupported('video/mp4')) options = { mimeType: 'video/mp4' };
 
@@ -358,16 +357,14 @@
 
                     mediaRecorder.start();
                     isRecording = true;
-                    
-                    // UI Updates
                     btn.classList.add('recording');
                     btn.innerText = "⬛"; 
-                    toggle.classList.add('recording'); // Pulse the toggle button too
+                    toggle.classList.add('recording');
 
-                    // Start "Keep-Alive" loop to ensure video doesn't desync/freeze
+                    // KEEP-ALIVE LOOP (Fixes audio sync)
                     recordingLoop();
 
-                    // Re-enter fullscreen if kicked out
+                    // RE-ENTER FULLSCREEN if needed
                     if (!document.fullscreenElement) {
                         document.documentElement.requestFullscreen().catch(e=>{});
                     }
@@ -376,20 +373,19 @@
                     alert("Recording failed: " + err.message);
                 }
             } else {
+                // STOP Recording
                 mediaRecorder.stop();
                 isRecording = false;
                 btn.classList.remove('recording');
                 btn.innerText = "🔴";
                 toggle.classList.remove('recording');
-                
                 if(mediaRecorder.stream) mediaRecorder.stream.getTracks().forEach(track => track.stop());
             }
         }
 
         function recordingLoop() {
             if (isRecording) {
-                // Force a render to keep the video stream active and synced with audio
-                canvas.renderAll(); 
+                canvas.renderAll(); // Force re-render to keep video stream alive
                 requestAnimationFrame(recordingLoop);
             }
         }
@@ -523,7 +519,6 @@
                 document.documentElement.requestFullscreen().catch(e => console.log(e));
             }
             
-            // Show Bar & Toggle Button
             document.getElementById('presentationBar').style.display = 'flex';
             document.getElementById('presentToggle').classList.add('active');
             
@@ -631,6 +626,7 @@
             canvas.renderAll();
         }
 
+        // Helpers
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); setTimeout(resizeCanvas, 350); }
         function addText() { const text = new fabric.IText('Text', { left: 100, top: 100, fontFamily: 'Arial', fill: '#333333', fontSize: 30 }); canvas.add(text); canvas.centerObject(text); canvas.setActiveObject(text); }
         function changeFont(font) { const o = canvas.getActiveObject(); if(o && o.type.includes('text')) { o.set("fontFamily", font); canvas.renderAll(); }}
