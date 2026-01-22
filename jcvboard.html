@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SlideGen - Compact & Fixed</title>
+    <title>SlideGen - Sync Fixed</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     
@@ -28,14 +28,14 @@
             display: flex;
         }
 
-        /* --- Sidebar Toggle (Smaller) --- */
+        /* --- Sidebar Toggle --- */
         .toggle-btn {
             position: absolute; top: 15px; left: 15px;
             background: white; border: 1px solid #ddd;
-            width: 36px; height: 36px; border-radius: 8px; /* Smaller */
+            width: 44px; height: 44px; border-radius: 8px;
             cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             z-index: 1000; display: flex; align-items: center; justify-content: center;
-            color: #333; font-size: 1.1rem;
+            color: #333; font-size: 1.2rem;
         }
 
         /* --- Sidebar --- */
@@ -44,7 +44,7 @@
             background-color: white;
             border-right: 1px solid #ddd;
             display: flex; flex-direction: column;
-            padding: 20px; padding-top: 60px;
+            padding: 20px; padding-top: 70px;
             box-shadow: 2px 0 5px rgba(0,0,0,0.05);
             z-index: 900; transition: margin-left 0.3s ease;
             height: 100%;
@@ -59,23 +59,23 @@
             .sidebar.hidden { transform: translateX(-100%); margin-left: 0; }
         }
 
-        .brand { position: absolute; top: 20px; left: 60px; font-size: 1.1rem; font-weight: bold; color: var(--primary); }
-        .tool-group { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .tool-group h3 { font-size: 0.75rem; text-transform: uppercase; color: #888; margin-bottom: 8px; }
+        .brand { position: absolute; top: 20px; left: 70px; font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+        .tool-group { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .tool-group h3 { font-size: 0.8rem; text-transform: uppercase; color: #888; margin-bottom: 10px; }
 
         .btn {
-            display: flex; align-items: center; width: 100%; padding: 10px;
-            margin-bottom: 6px; background: white; border: 1px solid #e5e7eb;
-            border-radius: 6px; cursor: pointer; font-size: 0.9rem; color: #374151;
+            display: flex; align-items: center; width: 100%; padding: 12px;
+            margin-bottom: 8px; background: white; border: 1px solid #e5e7eb;
+            border-radius: 8px; cursor: pointer; font-size: 0.95rem; color: #374151;
             justify-content: center; user-select: none;
         }
         .btn:active { transform: scale(0.98); }
         .btn.primary { background-color: var(--primary); color: white; border: none; }
         .btn.danger { color: #ef4444; border-color: #fee2e2; }
 
-        .style-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.85rem; color: #555; }
-        select { width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; background: #f8fafc; margin-bottom: 8px; font-size: 0.9rem; }
-        input[type="color"] { border: none; width: 30px; height: 30px; cursor: pointer; background: none; padding: 0; }
+        .style-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.9rem; color: #555; }
+        select { width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; background: #f8fafc; margin-bottom: 8px; }
+        input[type="color"] { border: none; width: 35px; height: 35px; cursor: pointer; background: none; padding: 0; }
         input[type="file"] { display: none; }
 
         /* --- Workspace --- */
@@ -99,7 +99,7 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.15); background: white; 
         }
 
-        /* --- FIXED BOTTOM BAR (Creation) --- */
+        /* --- FIXED BOTTOM BAR --- */
         .bottom-bar {
             background: white; 
             border-top: 1px solid #ddd;
@@ -117,44 +117,37 @@
         .slide-counter { font-weight: 600; min-width: 50px; text-align: center; font-size: 0.9rem; }
         .bottom-bar .btn { width: auto; padding: 10px 16px; margin: 0; font-size: 0.9rem; }
 
-        /* --- PRESENTATION TOOLBAR (COMPACT & SMALLER) --- */
+        /* --- PRESENTATION TOOLBAR --- */
         .presentation-bar {
             display: none; 
             position: fixed;
-            bottom: 70px; /* Adjusted position */
+            bottom: 90px; /* Higher up */
             left: 50%;
             transform: translateX(-50%);
             background: rgba(255, 255, 255, 0.95);
-            padding: 6px 12px; /* Less Padding */
-            border-radius: 40px;
+            padding: 10px 20px;
+            border-radius: 50px;
             z-index: 99999;
             align-items: center;
-            gap: 6px; 
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            gap: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            
+            /* Horizontal Scroll Logic */
             flex-wrap: nowrap;
             overflow-x: auto;
             max-width: 95vw;
             width: auto;
             white-space: nowrap;
             scrollbar-width: none; 
-            backdrop-filter: blur(5px);
         }
         .presentation-bar::-webkit-scrollbar { display: none; }
 
-        /* Smaller Presentation Buttons */
         .presentation-bar .btn {
             background: #f3f4f6; color: #333; border: 1px solid #ddd;
-            margin: 0; 
-            padding: 5px 10px; /* Smaller Padding */
-            font-size: 0.75rem; /* Smaller Font */
-            border-radius: 12px;
+            margin: 0; padding: 8px 14px; font-size: 0.85rem; border-radius: 20px;
             flex-shrink: 0;
-            min-height: 28px; /* Smaller Height */
-            display: inline-flex;
-            width: auto;
         }
         .presentation-bar .btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .presentation-bar .btn.danger { background: #fee2e2; color: #ef4444; border-color: #fee2e2; }
         
         .btn.recording {
             background-color: #ef4444; color: white; border-color: #ef4444;
@@ -162,50 +155,50 @@
         }
         @keyframes pulse {
             0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+            70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
             100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
 
-        .pen-slider { width: 50px; flex-shrink: 0; height: 5px; }
-        .divider { width: 1px; height: 18px; background: #ccc; margin: 0 2px; flex-shrink: 0; }
-
-        /* --- Circular Toggle Button (Smaller) --- */
+        /* --- Circular Toggle Button (Restored Size) --- */
         .present-toggle {
-            display: none; /* Hidden unless in present mode */
+            display: none;
             position: fixed;
-            bottom: 15px;
+            bottom: 25px;
             left: 50%;
             transform: translateX(-50%);
-            width: 40px; height: 40px; /* Smaller Size */
+            width: 50px; height: 50px;
             background: rgba(255,255,255,0.25);
             border-radius: 50%;
-            border: 1px solid rgba(255,255,255,0.4);
+            border: 2px solid rgba(255,255,255,0.5);
             color: white;
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             cursor: pointer;
             z-index: 100000;
             backdrop-filter: blur(4px);
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             transition: all 0.2s;
         }
-        .present-toggle:hover { background: rgba(255,255,255,0.4); transform: translateX(-50%) scale(1.05); }
-        .present-toggle.active { background: var(--primary); border-color: var(--primary); color: white; }
+        .present-toggle:hover { background: rgba(255,255,255,0.4); transform: translateX(-50%) scale(1.1); }
+        .present-toggle.active { background: var(--primary); border-color: var(--primary); color: white; opacity: 1; }
+        
+        /* Pulse toggle when recording and bar hidden */
+        .present-toggle.recording {
+            background-color: #ef4444; border-color: #ef4444; opacity: 1;
+            animation: pulse 1.5s infinite;
+        }
 
-        /* --- Presentation Mode Active State --- */
+        .pen-slider { width: 70px; flex-shrink: 0; }
+        .divider { width: 1px; height: 25px; background: #ccc; margin: 0 4px; flex-shrink: 0; }
+
         body.presentation-mode { background-color: #000; }
         body.presentation-mode .sidebar,
         body.presentation-mode .bottom-bar,
         body.presentation-mode .toggle-btn { display: none !important; }
         
-        body.presentation-mode .workspace { 
-            background-color: #000; 
-            grid-template-rows: 1fr; 
-        }
+        body.presentation-mode .workspace { background-color: #000; grid-template-rows: 1fr; }
         body.presentation-mode .canvas-area { padding: 0; }
-        
-        /* Show toggle button in presentation mode */
         body.presentation-mode .present-toggle { display: flex; }
 
     </style>
@@ -248,7 +241,7 @@
             <button class="btn" onclick="document.getElementById('objImgInput').click()">🖼️ Image</button>
             <input type="file" id="objImgInput" accept="image/*" onchange="addObjImage(this)">
             
-            <h3 style="margin-top:10px;">Background</h3>
+            <h3 style="margin-top:15px;">Background</h3>
             <div class="style-row">
                 <input type="color" onchange="setSolidBg(this.value)" title="Solid Color">
                 <button class="btn" style="width:auto; margin:0; flex:1;" onclick="document.getElementById('bgImgInput').click()">🌄 BG Image</button>
@@ -259,8 +252,8 @@
         <div class="tool-group">
             <h3>Project</h3>
             <button class="btn primary" onclick="startPresentation()">▶️ <b>Present</b></button>
-            <button class="btn" onclick="saveProject()">💾 Save (JSON)</button>
-            <button class="btn" onclick="document.getElementById('loadJsonInput').click()">📂 Load</button>
+            <button class="btn" onclick="saveProject()">💾 Save Project</button>
+            <button class="btn" onclick="document.getElementById('loadJsonInput').click()">📂 Load Project</button>
             <input type="file" id="loadJsonInput" onchange="loadProject(this)">
             <button class="btn danger" onclick="deleteObject()">🗑️ Delete Item</button>
         </div>
@@ -314,7 +307,6 @@
         let inkHistory = [];
         let inkRedoStack = [];
         
-        // Recording State
         let mediaRecorder;
         let recordedChunks = [];
         let isRecording = false;
@@ -330,27 +322,28 @@
         canvas.freeDrawingBrush.width = 3;
         canvas.freeDrawingBrush.color = "#ff0000";
 
-        // --- Recording Logic ---
+        // --- Recording Logic with Audio Fix ---
         async function toggleRecording() {
             const btn = document.getElementById('btnRec');
+            const toggle = document.getElementById('presentToggle');
             
             if (!isRecording) {
-                // START Recording
                 try {
+                    // 1. Get Streams
                     const canvasStream = document.querySelector('canvas').captureStream(30);
                     
                     let audioStream;
                     try {
-                        audioStream = await navigator.mediaDevices.getUserMedia({ 
-                            audio: { echoCancellation: true, noiseSuppression: true } 
-                        });
+                        audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     } catch (e) {
-                        alert("Mic access blocked. Recording VIDEO only. (Try HTTPS or Localhost for audio)");
+                        alert("Mic unavailable (Check permissions). Recording video only.");
                     }
 
+                    // 2. Combine
                     const tracks = [...canvasStream.getVideoTracks(), ...(audioStream ? audioStream.getAudioTracks() : [])];
                     const combinedStream = new MediaStream(tracks);
 
+                    // 3. Recorder
                     let options = { mimeType: 'video/webm;codecs=vp9' };
                     if (MediaRecorder.isTypeSupported('video/mp4')) options = { mimeType: 'video/mp4' };
 
@@ -365,10 +358,16 @@
 
                     mediaRecorder.start();
                     isRecording = true;
+                    
+                    // UI Updates
                     btn.classList.add('recording');
                     btn.innerText = "⬛"; 
-                    
-                    // RE-ENTER FULLSCREEN if the permission prompt kicked us out
+                    toggle.classList.add('recording'); // Pulse the toggle button too
+
+                    // Start "Keep-Alive" loop to ensure video doesn't desync/freeze
+                    recordingLoop();
+
+                    // Re-enter fullscreen if kicked out
                     if (!document.fullscreenElement) {
                         document.documentElement.requestFullscreen().catch(e=>{});
                     }
@@ -377,12 +376,21 @@
                     alert("Recording failed: " + err.message);
                 }
             } else {
-                // STOP Recording
                 mediaRecorder.stop();
                 isRecording = false;
                 btn.classList.remove('recording');
                 btn.innerText = "🔴";
+                toggle.classList.remove('recording');
+                
                 if(mediaRecorder.stream) mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        function recordingLoop() {
+            if (isRecording) {
+                // Force a render to keep the video stream active and synced with audio
+                canvas.renderAll(); 
+                requestAnimationFrame(recordingLoop);
             }
         }
 
@@ -397,7 +405,21 @@
             document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
         }
 
-        // --- Undo/Redo & Ink Logic ---
+        // --- Toolbar Toggle Logic ---
+        function togglePresentationBar() {
+            const bar = document.getElementById('presentationBar');
+            const toggleBtn = document.getElementById('presentToggle');
+            
+            if (bar.style.display === 'none' || bar.style.display === '') {
+                bar.style.display = 'flex';
+                toggleBtn.classList.add('active');
+            } else {
+                bar.style.display = 'none';
+                toggleBtn.classList.remove('active');
+            }
+        }
+
+        // --- Undo/Redo & Ink ---
         canvas.on('path:created', function(e) {
             if(isPresentationMode) {
                 e.path.isInk = true; 
@@ -421,20 +443,6 @@
                 inkHistory.push(path);
                 canvas.add(path);
                 canvas.renderAll();
-            }
-        }
-
-        // --- Toolbar Toggle Logic ---
-        function togglePresentationBar() {
-            const bar = document.getElementById('presentationBar');
-            const toggleBtn = document.getElementById('presentToggle');
-            
-            if (bar.style.display === 'none' || bar.style.display === '') {
-                bar.style.display = 'flex';
-                toggleBtn.classList.add('active');
-            } else {
-                bar.style.display = 'none';
-                toggleBtn.classList.remove('active');
             }
         }
 
@@ -623,7 +631,6 @@
             canvas.renderAll();
         }
 
-        // Helpers
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); setTimeout(resizeCanvas, 350); }
         function addText() { const text = new fabric.IText('Text', { left: 100, top: 100, fontFamily: 'Arial', fill: '#333333', fontSize: 30 }); canvas.add(text); canvas.centerObject(text); canvas.setActiveObject(text); }
         function changeFont(font) { const o = canvas.getActiveObject(); if(o && o.type.includes('text')) { o.set("fontFamily", font); canvas.renderAll(); }}
