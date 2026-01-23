@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SlideGen - MP4 Recording</title>
+    <title>SlideGen - Exit Fix</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
@@ -550,10 +550,8 @@
                     const audio = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(()=>null); 
                     const tracks = [...stream.getVideoTracks(), ...(audio?audio.getAudioTracks():[])]; 
                     
-                    // Prioritize MP4/H.264
                     const mimeTypes = ["video/mp4", "video/webm;codecs=h264", "video/webm;codecs=vp9", "video/webm"];
                     let selectedType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type));
-
                     if (!selectedType) { alert("No supported video mime type found."); return; }
 
                     let options = { mimeType: selectedType };
@@ -581,7 +579,6 @@
             const a = document.createElement('a'); 
             a.style.display = 'none'; 
             a.href = url; 
-            // Detect if actually mp4 supported
             let ext = mediaRecorder.mimeType.includes("mp4") ? "mp4" : "webm";
             a.download = `presentation.${ext}`; 
             document.body.appendChild(a); 
@@ -608,6 +605,7 @@
         function nextSlide(){ if(currentSlideIndex<slides.length-1){ slides[currentSlideIndex]=JSON.stringify(canvas.toJSON()); currentSlideIndex++; loadSlide(currentSlideIndex); }}
         function prevSlide(){ if(currentSlideIndex>0){ slides[currentSlideIndex]=JSON.stringify(canvas.toJSON()); currentSlideIndex--; loadSlide(currentSlideIndex); }}
         
+        // --- START PRESENTATION FIX ---
         function startPresentation() {
             slides[currentSlideIndex] = JSON.stringify(canvas.toJSON());
             isPresentationMode = true;
@@ -615,7 +613,7 @@
             document.getElementById('presentationBar').style.display = 'flex';
             document.getElementById('presentToggle').classList.add('active');
             
-            // --- FIX: Force set Normal Pen Mode active by default ---
+            // Force activate pen mode AND update UI
             setPenMode('normal');
 
             const el = document.documentElement;
@@ -630,10 +628,18 @@
         }
 
         function endPresentation() { 
+            if(isRecording) toggleRecording();
             isPresentationMode = false; 
+            canvas.isDrawingMode = false;
+            isEraserActive = false;
+            canvas.defaultCursor = 'default';
+            canvas.selection = true;
+            canvas.forEachObject(o => o.selectable = true);
+
             document.body.classList.remove('presentation-mode'); 
             document.getElementById('presentationBar').style.display = 'none'; 
             document.getElementById('presentToggle').classList.remove('active');
+            
             if (document.fullscreenElement) document.exitFullscreen();
             setTimeout(resizeCanvas, 100);
         }
