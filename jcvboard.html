@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SlideGen - Vertical Studio</title>
+    <title>SlideGen - MP4 Recording</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Gidugu&family=NTR&family=Ramabhadra&family=Tenali+Ramakrishna&family=Lobster&family=Montserrat:wght@400;700&family=Open+Sans:wght@400;600&family=Oswald&family=Pacifico&family=Roboto:wght@400;700&family=Lato&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Dhurjati&family=Gidugu&family=NTR&family=Ramabhadra&family=Montserrat:wght@400;700&family=Open+Sans:wght@400;600&family=Oswald&family=Pacifico&family=Roboto:wght@400;700&family=Lobster&display=swap" rel="stylesheet">
 
     <style>
         :root {
             --primary: #4f46e5;
+            --active-color: #059669; /* Emerald Green */
             --sidebar-width: 280px;
             --bottom-bar-height: 100px; 
         }
@@ -28,7 +30,7 @@
             display: flex;
         }
 
-        /* --- Sidebar Toggle --- */
+        /* --- Toggle Button --- */
         .toggle-btn {
             position: absolute; top: 15px; left: 15px;
             background: white; border: 1px solid #ddd;
@@ -72,167 +74,106 @@
         .btn:active { transform: scale(0.98); }
         .btn.primary { background-color: var(--primary); color: white; border: none; }
         .btn.danger { color: #ef4444; border-color: #fee2e2; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; background: #f3f4f6; color: #aaa; }
 
         .style-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.85rem; color: #555; }
         select { width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; background: #f8fafc; margin-bottom: 8px; font-size: 0.9rem; }
         input[type="color"] { border: none; width: 30px; height: 30px; cursor: pointer; background: none; padding: 0; }
         input[type="file"] { display: none; }
 
+        .shape-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; }
+        .shape-btn { font-size: 1.2rem; padding: 5px; }
+
         /* --- Workspace --- */
         .workspace {
-            flex-grow: 1; 
-            display: grid; 
-            grid-template-rows: 1fr var(--bottom-bar-height);
-            background-color: #e5e7eb; 
-            position: relative; 
-            height: 100%;
-            overflow: hidden;
+            flex-grow: 1; display: grid; grid-template-rows: 1fr var(--bottom-bar-height);
+            background-color: #e5e7eb; position: relative; height: 100%; overflow: hidden;
         }
-
         .canvas-area {
             display: flex; align-items: center; justify-content: center;
-            overflow: hidden; padding: 20px;
-            width: 100%; height: 100%;
+            overflow: hidden; padding: 20px; width: 100%; height: 100%;
         }
-        
-        .canvas-wrapper {
-            box-shadow: 0 10px 20px rgba(0,0,0,0.15); background: white; 
-        }
+        .canvas-wrapper { box-shadow: 0 10px 20px rgba(0,0,0,0.15); background: white; }
 
-        /* --- FIXED BOTTOM BAR (Creation) --- */
+        /* --- Bottom Bar --- */
         .bottom-bar {
-            background: white; 
-            border-top: 1px solid #ddd;
-            display: flex;
-            align-items: center; 
-            justify-content: center; 
-            gap: 10px; 
-            z-index: 50; 
-            width: 100%;
-            height: var(--bottom-bar-height);
-            padding-bottom: calc(20px + env(safe-area-inset-bottom)); 
-            padding-top: 10px;
+            background: white; border-top: 1px solid #ddd;
+            display: flex; align-items: center; justify-content: center; 
+            gap: 10px; z-index: 50; width: 100%; height: var(--bottom-bar-height);
+            padding-bottom: calc(20px + env(safe-area-inset-bottom)); padding-top: 10px;
         }
-        
         .slide-counter { font-weight: 600; min-width: 50px; text-align: center; font-size: 0.9rem; }
         .bottom-bar .btn { width: auto; padding: 10px 16px; margin: 0; font-size: 0.9rem; }
 
-        /* --- VERTICAL PRESENTATION TOOLBAR --- */
+        /* --- Vertical Toolbar (Presentation) --- */
         .presentation-bar {
-            display: none; 
-            position: fixed;
-            /* Center Vertically on the Right */
-            top: 50%;
-            right: 15px; 
-            transform: translateY(-50%);
-            
-            background: rgba(255, 255, 255, 0.9);
-            padding: 15px 8px; /* Vertical padding */
-            border-radius: 30px;
-            z-index: 99999;
-            
-            /* Vertical Layout */
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            
-            box-shadow: -5px 0 20px rgba(0,0,0,0.3);
-            
-            /* Scroll properties */
-            max-height: 85vh; /* Max height to fit screen */
-            overflow-y: auto;
-            overflow-x: hidden;
-            
-            backdrop-filter: blur(5px);
-            scrollbar-width: none; 
+            display: none; position: fixed; top: 50%; right: 15px; transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.9); padding: 15px 8px; border-radius: 30px;
+            z-index: 99999; flex-direction: column; align-items: center; gap: 8px;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.3); max-height: 85vh; overflow-y: auto; overflow-x: hidden;
+            backdrop-filter: blur(5px); scrollbar-width: none; 
         }
         .presentation-bar::-webkit-scrollbar { display: none; }
-
-        /* Compact Vertical Buttons */
         .presentation-bar .btn {
-            background: #f3f4f6; color: #333; border: 1px solid #ddd;
-            margin: 0; 
-            padding: 0;
-            width: 34px; height: 34px; /* Square shape */
-            font-size: 0.85rem; 
-            border-radius: 50%; /* Circle buttons look better in vertical bar */
-            flex-shrink: 0;
+            background: #f3f4f6; color: #333; border: 1px solid #ddd; margin: 0; padding: 0;
+            width: 34px; height: 34px; font-size: 0.85rem; border-radius: 50%; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
         }
-        .presentation-bar .btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        
+        /* Active state */
+        .presentation-bar .btn.active { 
+            background-color: var(--active-color) !important; 
+            color: white !important; 
+            border-color: var(--active-color) !important;
+        }
+        
         .presentation-bar .btn.danger { background: #fee2e2; color: #ef4444; border-color: #fee2e2; }
-        
-        /* Recording Animation */
-        .btn.recording {
-            background-color: #ef4444; color: white; border-color: #ef4444;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
+        .btn.recording { background-color: #ef4444; color: white; border-color: #ef4444; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        .presentation-bar input[type="color"] { width: 30px; height: 30px; border-radius: 50%; overflow: hidden; padding: 0; border: none; flex-shrink: 0; }
+        .pen-slider { width: 40px; height: 6px; flex-shrink: 0; margin: 5px 0; }
+        .divider { width: 80%; height: 1px; background: #ccc; margin: 4px 0; flex-shrink: 0; }
 
-        /* Color Picker in Vertical Bar */
-        .presentation-bar input[type="color"] {
-            width: 30px; height: 30px; 
-            border-radius: 50%; overflow: hidden; padding: 0; border: none;
-            flex-shrink: 0; cursor: pointer;
-        }
-
-        /* Slider in Vertical Bar */
-        .pen-slider { 
-            width: 40px; 
-            height: 6px; 
-            flex-shrink: 0; 
-            margin: 5px 0;
-        }
-        
-        /* Horizontal divider becomes width of bar */
-        .divider { 
-            width: 80%; 
-            height: 1px; 
-            background: #ccc; 
-            margin: 4px 0; 
-            flex-shrink: 0; 
-        }
-
-        /* --- Circular Toggle Button (Bottom Center) --- */
+        /* --- Circular Toggle --- */
         .present-toggle {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 40px; height: 40px;
-            background: rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.6);
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            z-index: 100000;
-            backdrop-filter: blur(4px);
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            transition: all 0.2s;
+            display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 40px; height: 40px; background: rgba(255,255,255,0.3); border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.6); color: white; font-size: 1.2rem;
+            cursor: pointer; z-index: 100000; backdrop-filter: blur(4px);
+            align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: all 0.2s;
         }
-        .present-toggle:hover { background: rgba(255,255,255,0.5); transform: translateX(-50%) scale(1.1); }
-        .present-toggle.active { background: var(--primary); border-color: var(--primary); color: white; opacity: 1; }
         
-        .present-toggle.recording {
-            background-color: #ef4444; border-color: #ef4444; opacity: 1;
-            animation: pulse 1.5s infinite;
+        .present-toggle.active { 
+            background: var(--active-color) !important; 
+            border-color: var(--active-color) !important; 
+            color: white !important; opacity: 1; 
         }
+        
+        .present-toggle.recording { background-color: #ef4444 !important; border-color: #ef4444 !important; opacity: 1; animation: pulse 1.5s infinite; }
+
+        /* --- MODAL --- */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 100000; align-items: center; justify-content: center;
+        }
+        .modal-box {
+            background: white; width: 90%; max-width: 500px; padding: 20px;
+            border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            max-height: 90vh; display: flex; flex-direction: column;
+        }
+        .modal-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 15px; color: var(--primary); }
+        .modal-body { overflow-y: auto; padding-right: 5px; flex: 1; }
+        .modal-body input, .modal-body textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: inherit; font-size: 0.9rem; resize: vertical; }
+        .modal-body label { font-size: 0.85rem; color: #555; display: block; margin-bottom: 3px; font-weight: 600; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
+        .table-grid-editor { display: grid; gap: 5px; margin-bottom: 10px; }
+        .table-grid-editor textarea { margin: 0; height: 50px; min-height: 40px; }
 
         body.presentation-mode { background-color: #000; }
-        body.presentation-mode .sidebar,
-        body.presentation-mode .bottom-bar,
-        body.presentation-mode .toggle-btn { display: none !important; }
-        
+        body.presentation-mode .sidebar, body.presentation-mode .bottom-bar, body.presentation-mode .toggle-btn { display: none !important; }
         body.presentation-mode .workspace { background-color: #000; grid-template-rows: 1fr; }
-        body.presentation-mode .canvas-area { padding: 0; }
+        body.presentation-mode .canvas-area { padding: 0; width: 100vw; height: 100vh; }
         body.presentation-mode .present-toggle { display: flex; }
 
     </style>
@@ -245,37 +186,61 @@
         <div class="brand">SlideGen</div>
 
         <div class="tool-group">
-            <h3>Text & Font</h3>
-            <select id="fontFamily" onchange="changeFont(this.value)">
-                <optgroup label="Telugu">
-                    <option value="NTR">NTR</option>
-                    <option value="Gidugu">Gidugu</option>
-                    <option value="Ramabhadra">Ramabhadra</option>
-                    <option value="Tenali Ramakrishna">Krishnadevaraya</option>
-                </optgroup>
-                <optgroup label="English">
-                    <option value="Arial">Arial</option>
-                    <option value="Lobster">Lobster</option>
-                    <option value="Montserrat">Montserrat</option>
-                    <option value="Pacifico">Pacifico</option>
-                    <option value="Open Sans">Open Sans</option>
-                </optgroup>
-            </select>
-            <div class="style-row">
-                <input type="color" oninput="changeObjColor(this.value)" value="#333333">
-                <span>Text Color</span>
-            </div>
-            <button class="btn" onclick="toggleBullets()">• Bullet List</button>
-            <button class="btn" onclick="toggleNumbering()">1. Number List</button>
+            <h3>Education</h3>
+            <button class="btn" onclick="openConfig('mcq')">❓ MCQ</button>
+            <button class="btn" onclick="openConfig('table')">▦ Table</button>
+            <button class="btn" onclick="openConfig('matching')">⇄ Matching</button>
+            <button class="btn" onclick="openConfig('math')">𝝅 Formula</button>
         </div>
 
         <div class="tool-group">
-            <h3>Insert</h3>
-            <button class="btn" onclick="addText()">📝 Text Box</button>
-            <button class="btn" onclick="document.getElementById('objImgInput').click()">🖼️ Image</button>
-            <input type="file" id="objImgInput" accept="image/*" onchange="addObjImage(this)">
+            <h3>Text & Fonts</h3>
+            <button class="btn" onclick="addText()">📝 Add Text</button>
             
-            <h3 style="margin-top:10px;">Background</h3>
+            <div class="style-row">
+                <select id="fontSelect" onchange="changeFont(this.value)">
+                    <option value="Arial">Arial</option>
+                    <optgroup label="Telugu Fonts">
+                        <option value="NTR">NTR</option>
+                        <option value="Ramabhadra">Ramabhadra</option>
+                        <option value="Gidugu">Gidugu</option>
+                        <option value="Dhurjati">Dhurjati</option>
+                    </optgroup>
+                    <optgroup label="English Styles">
+                        <option value="Montserrat">Montserrat</option>
+                        <option value="Roboto">Roboto</option>
+                        <option value="Oswald">Oswald</option>
+                        <option value="Lobster">Lobster</option>
+                        <option value="Pacifico">Pacifico</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="style-row" style="justify-content: space-between; flex-wrap:wrap;">
+                <input type="color" id="textColorPicker" value="#333333" onchange="changeObjColor(this.value)" title="Text Color" style="width:30px;">
+                <button class="btn" style="width:auto; margin:0;" onclick="toggleBold()" title="Bold">B</button>
+                <button class="btn" style="width:auto; margin:0;" onclick="toggleItalic()" title="Italic">I</button>
+                
+                <button class="btn" style="width:auto; margin:0; padding:6px;" onclick="setTextAlign('left')" title="Align Left">⬅</button>
+                <button class="btn" style="width:auto; margin:0; padding:6px;" onclick="setTextAlign('center')" title="Align Center">⬇</button>
+                <button class="btn" style="width:auto; margin:0; padding:6px;" onclick="setTextAlign('right')" title="Align Right">➡</button>
+                <button class="btn" style="width:auto; margin:0; padding:6px;" onclick="setTextAlign('justify')" title="Justify">≡</button>
+            </div>
+        </div>
+
+        <div class="tool-group">
+            <h3>Backgrounds</h3>
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <button class="btn" onclick="setGridBg()" style="font-size:0.8rem;">▦ Grid</button>
+                <button class="btn" onclick="setRuledBg()" style="font-size:0.8rem;">📝 Rule</button>
+            </div>
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <button class="btn" onclick="setBlackboardBg()" style="background:#2d3e50; color:white; font-size:0.8rem;">⬛ Board</button>
+                <button class="btn" onclick="setVintageBg()" style="background:#fdf5e6; color:#5d4037; font-size:0.8rem;">📜 Old</button>
+            </div>
+             <div style="display:flex; gap:5px; margin-bottom:8px;">
+                 <button class="btn" onclick="setDotsBg()" style="font-size:0.8rem;">⁖ Dots</button>
+            </div>
             <div class="style-row">
                 <input type="color" onchange="setSolidBg(this.value)" title="Solid Color">
                 <button class="btn" style="width:auto; margin:0; flex:1;" onclick="document.getElementById('bgImgInput').click()">🌄 BG Image</button>
@@ -285,9 +250,10 @@
 
         <div class="tool-group">
             <h3>Project</h3>
-            <button class="btn primary" onclick="startPresentation()">▶️ <b>Present</b></button>
-            <button class="btn" onclick="saveProject()">💾 Save Project</button>
-            <button class="btn" onclick="document.getElementById('loadJsonInput').click()">📂 Load Project</button>
+            <button class="btn primary" id="btnEditItem" onclick="editSelectedItem()" disabled>✏️ <b>Edit Selected</b></button>
+            <button class="btn" onclick="startPresentation()">▶️ Present</button>
+            <button class="btn" onclick="saveProject()">💾 Save</button>
+            <button class="btn" onclick="document.getElementById('loadJsonInput').click()">📂 Load</button>
             <input type="file" id="loadJsonInput" onchange="loadProject(this)">
             <button class="btn danger" onclick="deleteObject()">🗑️ Delete Item</button>
         </div>
@@ -299,7 +265,6 @@
                 <canvas id="slideCanvas"></canvas>
             </div>
         </div>
-
         <div class="bottom-bar">
             <button class="btn" onclick="prevSlide()">❮</button>
             <span class="slide-counter" id="slideCounter">1 / 1</span>
@@ -314,24 +279,30 @@
         <button class="btn" onclick="prevSlide()">▲</button>
         <button class="btn" onclick="nextSlide()">▼</button>
         <div class="divider"></div>
-        
         <button class="btn" id="btnRec" onclick="toggleRecording()" title="Record">🔴</button>
         <div class="divider"></div>
-
         <button class="btn" id="btnNormal" onclick="setPenMode('normal')" title="Pen">🖊️</button>
         <button class="btn" id="btnCursive" onclick="setPenMode('cursive')" title="Cursive" style="font-family:'Pacifico'; font-size:0.7rem;">f</button>
         <button class="btn" id="btnEraser" onclick="setEraserMode()" title="Eraser">🧹</button>
-        
         <input type="range" class="pen-slider" min="1" max="30" value="3" oninput="updatePenSize(this.value)" title="Size">
         <input type="color" id="presentPenColor" value="#ff0000" onchange="changePenColor(this.value)" title="Color">
-        
         <div class="divider"></div>
         <button class="btn" onclick="undoInk()" title="Undo">↩️</button>
         <button class="btn" onclick="redoInk()" title="Redo">↪️</button>
-        
         <div class="divider"></div>
         <button class="btn" onclick="togglePresentationBar()" title="Hide">➡</button>
         <button class="btn danger" onclick="endPresentation()" title="Exit">❌</button>
+    </div>
+
+    <div id="configModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title" id="modalTitle">Configuration</div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal()" style="width:auto;">Cancel</button>
+                <button class="btn primary" onclick="saveConfig()" style="width:auto;">Save Updates</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -341,10 +312,12 @@
         let isEraserActive = false;
         let inkHistory = [];
         let inkRedoStack = [];
-        
         let mediaRecorder;
         let recordedChunks = [];
         let isRecording = false;
+        let currentConfigType = null;
+        let activeEditGroup = null;
+        let currentTextAlign = 'left';
 
         const canvas = new fabric.Canvas('slideCanvas', {
             width: BASE_WIDTH,
@@ -357,322 +330,337 @@
         canvas.freeDrawingBrush.width = 3;
         canvas.freeDrawingBrush.color = "#ff0000";
 
-        // --- Recording Logic ---
-        async function toggleRecording() {
-            const btn = document.getElementById('btnRec');
-            const toggle = document.getElementById('presentToggle');
-            
-            if (!isRecording) {
-                try {
-                    const canvasStream = document.querySelector('canvas').captureStream(30);
-                    let audioStream;
-                    try {
-                        audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    } catch (e) {
-                        alert("Mic unavailable. Recording video only.");
-                    }
-
-                    const tracks = [...canvasStream.getVideoTracks(), ...(audioStream ? audioStream.getAudioTracks() : [])];
-                    const combinedStream = new MediaStream(tracks);
-
-                    let options = { mimeType: 'video/webm;codecs=vp9' };
-                    if (MediaRecorder.isTypeSupported('video/mp4')) options = { mimeType: 'video/mp4' };
-
-                    mediaRecorder = new MediaRecorder(combinedStream, options);
-                    recordedChunks = [];
-
-                    mediaRecorder.ondataavailable = (e) => {
-                        if (e.data.size > 0) recordedChunks.push(e.data);
-                    };
-
-                    mediaRecorder.onstop = saveRecording;
-
-                    mediaRecorder.start();
-                    isRecording = true;
-                    btn.classList.add('recording');
-                    btn.innerText = "⬛"; 
-                    toggle.classList.add('recording');
-
-                    // KEEP-ALIVE LOOP
-                    recordingLoop();
-
-                    if (!document.fullscreenElement) {
-                        document.documentElement.requestFullscreen().catch(e=>{});
-                    }
-
-                } catch (err) {
-                    alert("Recording failed: " + err.message);
-                }
-            } else {
-                mediaRecorder.stop();
-                isRecording = false;
-                btn.classList.remove('recording');
-                btn.innerText = "🔴";
-                toggle.classList.remove('recording');
-                if(mediaRecorder.stream) mediaRecorder.stream.getTracks().forEach(track => track.stop());
-            }
-        }
-
-        function recordingLoop() {
-            if (isRecording) {
-                canvas.renderAll(); 
-                requestAnimationFrame(recordingLoop);
-            }
-        }
-
-        function saveRecording() {
-            const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none'; a.href = url;
-            let ext = "webm";
-            if (mediaRecorder.mimeType.includes("mp4")) ext = "mp4";
-            a.download = `presentation.${ext}`;
-            document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
-        }
-
-        // --- Toolbar Toggle Logic ---
-        function togglePresentationBar() {
-            const bar = document.getElementById('presentationBar');
-            const toggleBtn = document.getElementById('presentToggle');
-            
-            if (bar.style.display === 'none' || bar.style.display === '') {
-                bar.style.display = 'flex';
-                toggleBtn.classList.add('active');
-            } else {
-                bar.style.display = 'none';
-                toggleBtn.classList.remove('active');
-            }
-        }
-
-        // --- Undo/Redo & Ink ---
-        canvas.on('path:created', function(e) {
-            if(isPresentationMode) {
-                e.path.isInk = true; 
-                inkHistory.push(e.path);
-                inkRedoStack = []; 
-            }
-        });
-
-        function undoInk() {
-            if(inkHistory.length > 0) {
-                const lastPath = inkHistory.pop();
-                inkRedoStack.push(lastPath);
-                canvas.remove(lastPath);
-                canvas.renderAll();
-            }
-        }
-
-        function redoInk() {
-            if(inkRedoStack.length > 0) {
-                const path = inkRedoStack.pop();
-                inkHistory.push(path);
-                canvas.add(path);
-                canvas.renderAll();
-            }
-        }
-
-        // --- Pen Logic ---
-        function setPenMode(mode) {
-            isEraserActive = false;
-            canvas.isDrawingMode = true;
-            canvas.discardActiveObject();
-            canvas.requestRenderAll();
-            canvas.defaultCursor = 'default';
-
-            canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
-            const color = document.getElementById('presentPenColor').value;
-            const size = document.querySelector('.pen-slider').value; 
-
-            if (mode === 'normal') {
-                canvas.freeDrawingBrush.width = parseInt(size, 10);
-                canvas.freeDrawingBrush.color = color;
-                canvas.freeDrawingBrush.shadow = null;
-            } else if (mode === 'cursive') {
-                canvas.freeDrawingBrush.width = parseInt(size, 10);
-                canvas.freeDrawingBrush.color = color;
-                canvas.freeDrawingBrush.shadow = new fabric.Shadow({
-                    blur: 3, offsetX: 3, offsetY: 3, color: 'rgba(0,0,0,0.2)'
-                });
-            }
-            updatePenUI(mode);
-        }
-
-        function setEraserMode() {
-            canvas.isDrawingMode = false; 
-            isEraserActive = true;
-            canvas.defaultCursor = 'crosshair'; 
-            canvas.forEachObject(function(o){ if(o.type === 'path') o.selectable = false; });
-            updatePenUI('eraser');
-        }
-
-        canvas.on('mouse:over', function(e) {
-            if(isEraserActive && e.target && e.target.type === 'path') {
-                canvas.remove(e.target);
-                const index = inkHistory.indexOf(e.target);
-                if (index > -1) inkHistory.splice(index, 1);
-            }
-        });
+        // --- GLOBAL STYLING FUNCTIONS ---
         
-        canvas.on('mouse:move', function(e) {
-             if(isEraserActive && e.target && e.target.type === 'path') {
-                canvas.remove(e.target);
-                const index = inkHistory.indexOf(e.target);
-                if (index > -1) inkHistory.splice(index, 1);
-            }
-        });
-
-        function updatePenUI(mode) {
-            ['btnNormal', 'btnCursive', 'btnEraser'].forEach(id => document.getElementById(id).classList.remove('active'));
-            if(mode === 'normal') document.getElementById('btnNormal').classList.add('active');
-            if(mode === 'cursive') document.getElementById('btnCursive').classList.add('active');
-            if(mode === 'eraser') document.getElementById('btnEraser').classList.add('active');
+        function changeObjColor(hex) {
+            const obj = canvas.getActiveObject();
+            if(!obj) return;
+            if (obj.type === 'group') {
+                obj.getObjects().forEach(child => {
+                    if (child.type === 'text' || child.type === 'i-text' || child.type === 'textbox') {
+                        child.set('fill', hex);
+                    } else if (child.type === 'group' && child.getObjects) { 
+                         child.getObjects().forEach(path => { if(path.set) path.set('fill', hex); });
+                    } else if (child.type === 'path') { child.set('fill', hex); }
+                });
+                obj.addWithUpdate();
+            } else if (obj.customType === 'math' && obj.getObjects) {
+                obj.getObjects().forEach(path => { if(path.set) path.set('fill', hex); });
+                 obj.addWithUpdate();
+            } else { obj.set('fill', hex); }
+            canvas.renderAll();
         }
 
-        function updatePenSize(val) { if(canvas.freeDrawingBrush) canvas.freeDrawingBrush.width = parseInt(val, 10); }
-        function changePenColor(hex) { if (canvas.freeDrawingBrush) canvas.freeDrawingBrush.color = hex; }
+        function setTextAlign(align) {
+            currentTextAlign = align;
+            const obj = canvas.getActiveObject();
+            if(obj) {
+                if(obj.type === 'textbox' || obj.type === 'i-text') {
+                    obj.set('textAlign', align);
+                }
+                else if(obj.type === 'group') {
+                     obj.getObjects().forEach(child => {
+                        if(child.type === 'textbox' || child.type === 'i-text') {
+                            child.set('textAlign', align);
+                        }
+                    });
+                     obj.addWithUpdate();
+                }
+                canvas.renderAll();
+            }
+        }
 
+        function changeFont(fontName) {
+            const obj = canvas.getActiveObject();
+            if (obj) {
+                if (obj.type === 'i-text' || obj.type === 'textbox') { obj.set('fontFamily', fontName); } 
+                else if (obj.type === 'group') {
+                    obj._objects.forEach(child => { if (child.type === 'i-text' || child.type === 'textbox') { child.set('fontFamily', fontName); } });
+                }
+                canvas.renderAll();
+            }
+        }
 
-        // --- Presentation Mode ---
+        function toggleBold() {
+            const obj = canvas.getActiveObject();
+            if(obj && (obj.type === 'i-text' || obj.type === 'textbox')) {
+                obj.set('fontWeight', obj.fontWeight === 'bold' ? 'normal' : 'bold'); canvas.renderAll();
+            }
+        }
+
+        function toggleItalic() {
+            const obj = canvas.getActiveObject();
+            if(obj && (obj.type === 'i-text' || obj.type === 'textbox')) {
+                obj.set('fontStyle', obj.fontStyle === 'italic' ? 'normal' : 'italic'); canvas.renderAll();
+            }
+        }
+
+        // --- RENDER CONTENT ---
+        async function renderContent(text, fontSize, width) {
+            let font = document.getElementById('fontSelect').value;
+            let color = document.getElementById('textColorPicker').value;
+            let align = currentTextAlign;
+
+            const hasMath = text.includes('$');
+            if (hasMath) {
+                let latexStr = text;
+                const parts = text.split('$');
+                if(parts.length > 1) {
+                    latexStr = "";
+                    parts.forEach((part, idx) => {
+                        if(idx % 2 === 0) { const cleanPart = part.replace(/\n/g, ' \\\\ '); if(cleanPart.trim() !== "") latexStr += `\\text{${cleanPart}} `; } 
+                        else { latexStr += `${part} `; }
+                    });
+                }
+                try {
+                    const svg = await MathJax.tex2svgPromise(latexStr);
+                    const svgStr = svg.querySelector('svg').outerHTML;
+                    return new Promise((resolve) => {
+                        fabric.loadSVGFromString(svgStr, (objects, options) => {
+                            const obj = fabric.util.groupSVGElements(objects, options);
+                            obj.getObjects().forEach(o => o.set('fill', color));
+                            const desiredH = fontSize * 1.5; const scale = desiredH / obj.height;
+                            obj.scale(scale);
+                            if (obj.width * obj.scaleX > width) obj.scaleToWidth(width);
+                            resolve(obj);
+                        });
+                    });
+                } catch(e) { return new fabric.Textbox(text + " (Error)", { fontSize: fontSize, width: width, fontFamily: font, fill: color, textAlign: align }); }
+            } else {
+                return new fabric.Textbox(text, { fontSize: fontSize, width: width, splitByGrapheme: false, fontFamily: font, fill: color, textAlign: align, breakWords: true });
+            }
+        }
+
+        // --- DYNAMIC DRAWING FUNCTIONS ---
+
+        async function drawMCQ(data) {
+            if (activeEditGroup) { var t=activeEditGroup.top; var l=activeEditGroup.left; canvas.remove(activeEditGroup); } else { var t=50; var l=50; }
+            const qObj = await renderContent(data.q, 24, 600); qObj.set({ top: 0, left: 0 });
+            const objects = [qObj]; let currentTop = (qObj.height * qObj.scaleY) + 25;
+            for(let i=0; i<data.o.length; i++) {
+                const circle = new fabric.Circle({ radius: 8, fill: 'transparent', stroke: '#333', strokeWidth: 2, top: currentTop + 5, left: 0 });
+                const optObj = await renderContent(data.o[i], 20, 550); optObj.set({ top: currentTop, left: 30 });
+                objects.push(circle, optObj); currentTop += Math.max((optObj.height * optObj.scaleY), 30) + 15;
+            }
+            const group = new fabric.Group(objects, { top: t, left: l }); group.customType = 'mcq'; group.customData = data; finishObject(group);
+        }
+
+        async function drawMatching(data) {
+            if (activeEditGroup) { var t=activeEditGroup.top; var l=activeEditGroup.left; canvas.remove(activeEditGroup); } else { var t=50; var l=50; }
+            const objects = []; let currentTop = 0; const colWidth = 200;
+            for(let i=0; i<data.pairs.length; i++) {
+                const lObj = await renderContent(data.pairs[i][0], 20, colWidth); lObj.set({ top: currentTop, left: 0, originX: 'left' });
+                const rObj = await renderContent(data.pairs[i][1], 20, colWidth); rObj.set({ top: currentTop, left: colWidth + 120, originX: 'left' });
+                const rowH = Math.max((lObj.height * lObj.scaleY), (rObj.height * rObj.scaleY), 30);
+                const dotY = currentTop + (rowH / 2) - 4;
+                const dotL = new fabric.Circle({ radius: 4, fill:'#333', top: dotY, left: colWidth + 10 });
+                const dotR = new fabric.Circle({ radius: 4, fill:'#333', top: dotY, left: colWidth + 110 });
+                objects.push(lObj, dotL, dotR, rObj); currentTop += rowH + 20;
+            }
+            const group = new fabric.Group(objects, { top: t, left: l }); group.customType = 'matching'; group.customData = data; finishObject(group);
+        }
+
+        async function drawTable(data) {
+            if (activeEditGroup) { var t=activeEditGroup.top; var l=activeEditGroup.left; canvas.remove(activeEditGroup); } else { var t=50; var l=50; }
+            const cellW = 180; const objects = []; let currentY = 0; let cellIdx = 0;
+            for(let r=0; r<data.rows; r++){
+                let rowContentObjs = []; let maxH = 40;
+                for(let c=0; c<data.cols; c++){
+                    const contentText = data.cells[cellIdx + c] || " ";
+                    const contentObj = await renderContent(contentText, 18, cellW - 10);
+                    const actualH = contentObj.height * contentObj.scaleY; if(actualH > maxH) maxH = actualH;
+                    rowContentObjs.push(contentObj);
+                }
+                const rowH = maxH + 20; 
+                for(let c=0; c<data.cols; c++){
+                    const rect = new fabric.Rect({ width: cellW, height: rowH, fill: 'transparent', stroke:'#333', strokeWidth:1, top: currentY, left: c*cellW });
+                    const obj = rowContentObjs[c];
+                    const objH = obj.height * obj.scaleY; const objW = obj.width * obj.scaleX;
+                    obj.set({ top: currentY + (rowH - objH)/2, left: c*cellW + (cellW - objW)/2 });
+                    objects.push(rect, obj);
+                }
+                cellIdx += data.cols; currentY += rowH;
+            }
+            const group = new fabric.Group(objects, { top: t, left: l }); group.customType = 'table'; group.customData = data; finishObject(group);
+        }
+
+        async function drawMath(latex) {
+            if (activeEditGroup) { var t=activeEditGroup.top; var l=activeEditGroup.left; canvas.remove(activeEditGroup); } else { var t=100; var l=100; }
+            const color = document.getElementById('textColorPicker').value;
+            const svg = await MathJax.tex2svgPromise(latex);
+            const svgStr = svg.querySelector('svg').outerHTML;
+            fabric.loadSVGFromString(svgStr, (objects, options) => {
+                const mathObj = fabric.util.groupSVGElements(objects, options);
+                mathObj.getObjects().forEach(o => o.set('fill', color));
+                mathObj.scale(30 / mathObj.height); mathObj.set({ left: l, top: t });
+                mathObj.customType = 'math'; mathObj.customData = { latex: latex }; finishObject(mathObj);
+            });
+        }
+
+        function finishObject(group) {
+            if (!activeEditGroup && group.width > BASE_WIDTH * 0.9) group.scaleToWidth(BASE_WIDTH * 0.9);
+            canvas.add(group); canvas.centerObject(group); canvas.setActiveObject(group); canvas.requestRenderAll(); updateEditButton();
+        }
+        function addRect() { const rect = new fabric.Rect({ left: 100, top: 100, fill: '#4f46e5', width: 100, height: 100 }); canvas.add(rect); canvas.setActiveObject(rect); }
+        function addCircle() { const circle = new fabric.Circle({ left: 200, top: 200, fill: '#ec4899', radius: 50 }); canvas.add(circle); canvas.setActiveObject(circle); }
+        function addTriangle() { const triangle = new fabric.Triangle({ left: 300, top: 150, fill: '#f59e0b', width: 100, height: 100 }); canvas.add(triangle); canvas.setActiveObject(triangle); }
+        function addText() { const text = new fabric.Textbox('Double click to edit', { left: 100, top: 100, width: 300, fontFamily: document.getElementById('fontSelect').value, fill: document.getElementById('textColorPicker').value, fontSize: 30, textAlign: currentTextAlign }); canvas.add(text); canvas.centerObject(text); canvas.setActiveObject(text); }
+        function setGridBg() { const svg = `<svg width="40" height="40" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e5e7eb" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(#grid)"/></svg>`; setBgFromSvg(svg); }
+        function setDotsBg() { const svg = `<svg width="20" height="20" xmlns="http://www.w3.org/2000/svg"><circle cx="2" cy="2" r="1" fill="#cbd5e1"/></svg>`; setBgFromSvg(svg); }
+        function setBlackboardBg() { canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas)); canvas.setBackgroundColor('#2d3e50', canvas.renderAll.bind(canvas)); }
+        function setRuledBg() { const svg = `<svg width="40" height="25" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="25" fill="white"/><line x1="0" y1="24" x2="40" y2="24" stroke="#94a3b8" stroke-width="1"/></svg>`; setBgFromSvg(svg); }
+        function setVintageBg() { canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas)); const pattern = new fabric.Gradient({ type: 'radial', coords: { r1: 0, r2: BASE_WIDTH, x1: BASE_WIDTH/2, y1: BASE_HEIGHT/2, x2: BASE_WIDTH/2, y2: BASE_HEIGHT/2 }, colorStops: [{ offset: 0, color: '#fdf5e6' }, { offset: 1, color: '#faebd7' }] }); canvas.setBackgroundColor(pattern, canvas.renderAll.bind(canvas)); }
+        function setBgFromSvg(svgString) { canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas)); const img = new Image(); img.src = 'data:image/svg+xml;base64,' + btoa(svgString); img.onload = function() { const pattern = new fabric.Pattern({ source: img, repeat: 'repeat' }); canvas.setBackgroundColor(pattern, canvas.renderAll.bind(canvas)); } }
+        function setSolidBg(c) { canvas.setBackgroundImage(null,()=>canvas.renderAll()); canvas.setBackgroundColor(c,()=>canvas.renderAll()); }
+        function setBgImage(i) { const f=i.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ fabric.Image.fromURL(e.target.result, img=>{ const s = Math.max(BASE_WIDTH/img.width, BASE_HEIGHT/img.height); canvas.setBackgroundImage(img, ()=>canvas.renderAll(), { scaleX:s, scaleY:s, originX:'left', originY:'top'}); })}; r.readAsDataURL(f); i.value=''; }
+        
+        function updateEditButton() {
+            const btn = document.getElementById('btnEditItem'); const fontSel = document.getElementById('fontSelect'); const colSel = document.getElementById('textColorPicker'); const obj = canvas.getActiveObject();
+            if (obj && (obj.customType || (obj.group && obj.group.customType))) { btn.disabled = false; btn.style.opacity = '1'; btn.innerHTML = `✏️ <b>Edit ${obj.customType ? obj.customType.toUpperCase() : 'Item'}</b>`; } else { btn.disabled = true; btn.style.opacity = '0.5'; btn.innerHTML = `✏️ <b>Edit Selected</b>`; }
+            if (obj && (obj.type === 'i-text' || obj.type === 'textbox')) { fontSel.value = obj.fontFamily || 'Arial'; colSel.value = obj.fill; }
+        }
+        canvas.on('selection:created', updateEditButton); canvas.on('selection:updated', updateEditButton); canvas.on('selection:cleared', updateEditButton); canvas.on('mouse:dblclick', function(e) { editSelectedItem(); });
+        function editSelectedItem() { let target = canvas.getActiveObject(); if(!target) return; if(!target.customType && target.group) target = target.group; if(target && target.customType) openConfig(target.customType, target); }
+
+        function openConfig(type, existingGroup = null) {
+            currentConfigType = type; activeEditGroup = existingGroup; document.getElementById('configModal').style.display = 'flex'; const body = document.getElementById('modalBody'); body.innerHTML = ''; let data = existingGroup ? existingGroup.customData : null;
+            if (type === 'mcq') { body.innerHTML = `<label>Question:</label><textarea id="inpQ" rows="3">${data?data.q:'Question?'}</textarea><label>Options:</label><textarea id="inpA" rows="2">${data?data.o[0]:'Option A'}</textarea><textarea id="inpB" rows="2">${data?data.o[1]:'Option B'}</textarea><textarea id="inpC" rows="2">${data?data.o[2]:'Option C'}</textarea><textarea id="inpD" rows="2">${data?data.o[3]:'Option D'}</textarea>`; } 
+            else if (type === 'matching') { let html = ''; const p = data?data.pairs:[['A','1'],['B','2'],['C','3'],['D','4']]; for(let i=0;i<4;i++) html+=`<div style="display:flex;gap:5px;"><textarea id="mL${i}" rows="1">${p[i][0]}</textarea><textarea id="mR${i}" rows="1">${p[i][1]}</textarea></div>`; body.innerHTML = html; } 
+            else if (type === 'table') { if(existingGroup){ let h=`<div class="table-grid-editor" style="grid-template-columns:repeat(${data.cols},1fr);">`; for(let i=0;i<data.rows*data.cols;i++) h+=`<textarea class="tbl-cell-inp" rows="1">${data.cells[i]||''}</textarea>`; h+='</div>'; body.innerHTML=h+`<input type="hidden" id="inpRows" value="${data.rows}"><input type="hidden" id="inpCols" value="${data.cols}">`; } else { body.innerHTML=`<label>Rows:</label><input type="number" id="inpRows" value="3"><label>Cols:</label><input type="number" id="inpCols" value="3">`; } }
+            else if (type === 'math') { body.innerHTML = `<label>LaTeX:</label><textarea id="inpMath" rows="3">${data?data.latex:'x^2'}</textarea>`; }
+        }
+        function closeModal() { document.getElementById('configModal').style.display = 'none'; currentConfigType = null; activeEditGroup = null; }
+        async function saveConfig() {
+            let newData = {};
+            if (currentConfigType === 'mcq') { newData.q = document.getElementById('inpQ').value; newData.o = ['inpA','inpB','inpC','inpD'].map(id=>document.getElementById(id).value); await drawMCQ(newData); } 
+            else if (currentConfigType === 'matching') { newData.pairs=[]; for(let i=0;i<4;i++) newData.pairs.push([document.getElementById('mL'+i).value, document.getElementById('mR'+i).value]); await drawMatching(newData); } 
+            else if (currentConfigType === 'table') { newData.rows=parseInt(document.getElementById('inpRows').value); newData.cols=parseInt(document.getElementById('inpCols').value); const inps=document.querySelectorAll('.tbl-cell-inp'); if(inps.length) newData.cells=Array.from(inps).map(i=>i.value); else newData.cells=new Array(newData.rows*newData.cols).fill(" "); await drawTable(newData); }
+            else if (currentConfigType === 'math') { await drawMath(document.getElementById('inpMath').value); }
+            closeModal();
+        }
+
+        function deleteObject() { const o = canvas.getActiveObject(); if(o) canvas.remove(o); }
+
+        // --- RECORDING WITH MP4 PRIORITY ---
+        async function toggleRecording() { 
+            const btn = document.getElementById('btnRec'); const toggle = document.getElementById('presentToggle'); 
+            if (!isRecording) { 
+                try { 
+                    const stream = document.querySelector('canvas').captureStream(30); 
+                    const audio = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(()=>null); 
+                    const tracks = [...stream.getVideoTracks(), ...(audio?audio.getAudioTracks():[])]; 
+                    
+                    // Prioritize MP4/H.264
+                    const mimeTypes = ["video/mp4", "video/webm;codecs=h264", "video/webm;codecs=vp9", "video/webm"];
+                    let selectedType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type));
+
+                    if (!selectedType) { alert("No supported video mime type found."); return; }
+
+                    let options = { mimeType: selectedType };
+                    mediaRecorder = new MediaRecorder(new MediaStream(tracks), options); 
+                    recordedChunks = []; 
+                    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); }; 
+                    mediaRecorder.onstop = saveRecording; 
+                    mediaRecorder.start(); 
+                    isRecording = true; 
+                    btn.classList.add('recording'); toggle.classList.add('recording'); btn.innerText="⬛"; 
+                    recordingLoop(); 
+                } catch (e) { alert("Error: "+e.message); } 
+            } else { 
+                mediaRecorder.stop(); isRecording = false; 
+                btn.classList.remove('recording'); toggle.classList.remove('recording'); btn.innerText="🔴"; 
+                if(mediaRecorder.stream) mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            } 
+        }
+
+        function recordingLoop() { if (isRecording) { canvas.renderAll(); requestAnimationFrame(recordingLoop); } }
+        
+        function saveRecording() { 
+            const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType }); 
+            const url = URL.createObjectURL(blob); 
+            const a = document.createElement('a'); 
+            a.style.display = 'none'; 
+            a.href = url; 
+            // Detect if actually mp4 supported
+            let ext = mediaRecorder.mimeType.includes("mp4") ? "mp4" : "webm";
+            a.download = `presentation.${ext}`; 
+            document.body.appendChild(a); 
+            a.click(); 
+            window.URL.revokeObjectURL(url); 
+        }
+        
+        function togglePresentationBar() { const b=document.getElementById('presentationBar'); const t=document.getElementById('presentToggle'); if(b.style.display==='flex'){b.style.display='none';t.classList.remove('active');}else{b.style.display='flex';t.classList.add('active');}}
+        function setPenMode(m){ isEraserActive=false; canvas.isDrawingMode=true; canvas.freeDrawingBrush=new fabric.PencilBrush(canvas); canvas.freeDrawingBrush.width=parseInt(document.querySelector('.pen-slider').value); canvas.freeDrawingBrush.color=document.getElementById('presentPenColor').value; if(m==='cursive') canvas.freeDrawingBrush.shadow=new fabric.Shadow({blur:3,offsetX:3,offsetY:3,color:'rgba(0,0,0,0.2)'}); updatePenUI(m); }
+        function setEraserMode(){ isEraserActive=true; canvas.isDrawingMode=false; canvas.defaultCursor='crosshair'; updatePenUI('eraser'); }
+        function updatePenUI(mode) { ['btnNormal', 'btnCursive', 'btnEraser'].forEach(id => document.getElementById(id).classList.remove('active')); if(mode === 'normal') document.getElementById('btnNormal').classList.add('active'); if(mode === 'cursive') document.getElementById('btnCursive').classList.add('active'); if(mode === 'eraser') document.getElementById('btnEraser').classList.add('active'); }
+        canvas.on('mouse:move', e=>{if(isEraserActive&&e.target&&e.target.type==='path')canvas.remove(e.target)});
+        function updatePenSize(v){if(canvas.freeDrawingBrush)canvas.freeDrawingBrush.width=parseInt(v);}
+        function changePenColor(c){if(canvas.freeDrawingBrush)canvas.freeDrawingBrush.color=c;}
+        canvas.on('path:created', e=>{if(isPresentationMode){e.path.isInk=true;inkHistory.push(e.path);inkRedoStack=[];}});
+        function undoInk(){if(inkHistory.length){const p=inkHistory.pop();inkRedoStack.push(p);canvas.remove(p);}}
+        function redoInk(){if(inkRedoStack.length){const p=inkRedoStack.pop();inkHistory.push(p);canvas.add(p);}}
+        
+        let slides=[]; let currentSlideIndex=0;
+        function saveProject(){ slides[currentSlideIndex]=JSON.stringify(canvas.toJSON()); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(slides)],{type:'application/json'})); a.download='project.json'; a.click(); }
+        function loadProject(i){ const r=new FileReader(); r.onload=e=>{ slides=JSON.parse(e.target.result); currentSlideIndex=0; loadSlide(0); }; r.readAsText(i.files[0]); }
+        function loadSlide(i){ canvas.clear(); canvas.loadFromJSON(slides[i], ()=>canvas.renderAll()); document.getElementById('slideCounter').innerText=`${i+1}/${slides.length}`; }
+        function addNewSlide(){ slides[currentSlideIndex]=JSON.stringify(canvas.toJSON()); slides.push(JSON.stringify({})); currentSlideIndex++; loadSlide(currentSlideIndex); }
+        function nextSlide(){ if(currentSlideIndex<slides.length-1){ slides[currentSlideIndex]=JSON.stringify(canvas.toJSON()); currentSlideIndex++; loadSlide(currentSlideIndex); }}
+        function prevSlide(){ if(currentSlideIndex>0){ slides[currentSlideIndex]=JSON.stringify(canvas.toJSON()); currentSlideIndex--; loadSlide(currentSlideIndex); }}
+        
         function startPresentation() {
-            saveCurrentState();
+            slides[currentSlideIndex] = JSON.stringify(canvas.toJSON());
             isPresentationMode = true;
             document.body.classList.add('presentation-mode');
-            
-            inkHistory = [];
-            inkRedoStack = [];
-
-            canvas.selection = false;
-            canvas.forEachObject(o => o.selectable = false);
-            
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen().catch(e => console.log(e));
-            }
-            
-            // Show Bar & Toggle Button
             document.getElementById('presentationBar').style.display = 'flex';
             document.getElementById('presentToggle').classList.add('active');
             
-            resizeCanvas();
-        }
+            // --- FIX: Force set Normal Pen Mode active by default ---
+            setPenMode('normal');
 
-        function endPresentation() {
-            if(isRecording) toggleRecording();
-
-            canvas.isDrawingMode = false;
-            isPresentationMode = false;
-            isEraserActive = false;
-            document.body.classList.remove('presentation-mode');
-
-            canvas.selection = true;
-            canvas.forEachObject(o => o.selectable = true);
-            canvas.defaultCursor = 'default';
-
-            if (document.fullscreenElement) document.exitFullscreen();
-            
-            document.getElementById('presentationBar').style.display = 'none';
-            document.getElementById('presentToggle').classList.remove('active');
-            
-            resizeCanvas();
-        }
-
-        // --- Project Logic ---
-        let slides = []; let currentSlideIndex = 0;
-
-        function saveProject() {
-            saveCurrentState();
-            const dataStr = JSON.stringify(slides);
-            const blob = new Blob([dataStr], {type: "application/json"});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = "presentation.json";
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        function loadProject(input) {
-            const file = input.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const loadedSlides = JSON.parse(e.target.result);
-                    if(Array.isArray(loadedSlides)) {
-                        slides = loadedSlides;
-                        currentSlideIndex = 0;
-                        loadSlide(0);
-                        setTimeout(() => alert("Loaded!"), 200);
-                    } else { alert("Invalid file."); }
-                } catch(err) { alert("Error reading file."); }
-            }
-            reader.readAsText(file); input.value = ''; 
-        }
-
-        function saveCurrentState() { slides[currentSlideIndex] = JSON.stringify(canvas.toJSON()); }
-
-        function loadSlide(index) {
-            currentSlideIndex = index;
-            const json = slides[index];
-            canvas.setZoom(1);
-            canvas.setDimensions({ width: BASE_WIDTH, height: BASE_HEIGHT });
-            canvas.clear();
-            
-            if (json) {
-                canvas.loadFromJSON(json, function() {
-                    resizeCanvas();
-                    if(isPresentationMode) {
-                        canvas.selection = false;
-                        canvas.forEachObject(o => o.selectable = false);
-                    }
-                    canvas.renderAll();
-                });
+            const el = document.documentElement;
+            const requestMethod = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+            if (requestMethod) {
+                requestMethod.call(el).then(() => {
+                    setTimeout(resizeCanvas, 200);
+                }).catch(err => console.log("Fullscreen Error:", err));
             } else {
-                canvas.setBackgroundColor('#ffffff');
                 resizeCanvas();
             }
-            updateCounters();
-            inkHistory = [];
-            inkRedoStack = [];
         }
 
-        function updateCounters() { document.getElementById('slideCounter').innerText = `${currentSlideIndex + 1} / ${slides.length}`; }
-        function addNewSlide() { saveCurrentState(); slides.push(null); loadSlide(slides.length - 1); }
-        function nextSlide() { if (currentSlideIndex < slides.length - 1) { saveCurrentState(); loadSlide(currentSlideIndex + 1); } }
-        function prevSlide() { if (currentSlideIndex > 0) { saveCurrentState(); loadSlide(currentSlideIndex - 1); } }
+        function endPresentation() { 
+            isPresentationMode = false; 
+            document.body.classList.remove('presentation-mode'); 
+            document.getElementById('presentationBar').style.display = 'none'; 
+            document.getElementById('presentToggle').classList.remove('active');
+            if (document.fullscreenElement) document.exitFullscreen();
+            setTimeout(resizeCanvas, 100);
+        }
 
-        function resizeCanvas() {
+        function resizeCanvas() { 
             const canvasArea = document.getElementById('canvasArea');
-            let availableWidth, availableHeight;
+            let availW, availH;
+
             if (isPresentationMode) {
-                availableWidth = window.innerWidth; availableHeight = window.innerHeight;
+                availW = window.innerWidth;
+                availH = window.innerHeight;
             } else {
-                availableWidth = canvasArea.clientWidth - 20; availableHeight = canvasArea.clientHeight - 20;
+                availW = canvasArea.clientWidth - 20; 
+                availH = canvasArea.clientHeight - 20;
             }
-            const scaleX = availableWidth / BASE_WIDTH;
-            const scaleY = availableHeight / BASE_HEIGHT;
-            let scale = Math.min(scaleX, scaleY);
-            if (!isPresentationMode && scale > 1.2) scale = 1.2;
+
+            const scale = Math.min(availW / BASE_WIDTH, availH / BASE_HEIGHT);
             canvas.setDimensions({ width: BASE_WIDTH * scale, height: BASE_HEIGHT * scale });
             canvas.setZoom(scale);
             canvas.renderAll();
         }
 
-        // Helpers
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); setTimeout(resizeCanvas, 350); }
-        function addText() { const text = new fabric.IText('Text', { left: 100, top: 100, fontFamily: 'Arial', fill: '#333333', fontSize: 30 }); canvas.add(text); canvas.centerObject(text); canvas.setActiveObject(text); }
-        function changeFont(font) { const o = canvas.getActiveObject(); if(o && o.type.includes('text')) { o.set("fontFamily", font); canvas.renderAll(); }}
-        function changeObjColor(hex) { const o = canvas.getActiveObject(); if(o) { o.set('fill', hex); canvas.renderAll(); }}
-        function deleteObject() { const o = canvas.getActiveObject(); if(o) canvas.remove(o); }
-        function setSolidBg(c) { canvas.setBackgroundImage(null,()=>canvas.renderAll()); canvas.setBackgroundColor(c,()=>canvas.renderAll()); }
-        function setBgImage(i) { const f=i.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ fabric.Image.fromURL(e.target.result, img=>{ const s = Math.max(BASE_WIDTH/img.width, BASE_HEIGHT/img.height); canvas.setBackgroundImage(img, ()=>canvas.renderAll(), { scaleX:s, scaleY:s, originX:'left', originY:'top'}); })}; r.readAsDataURL(f); i.value=''; }
-        function addObjImage(i) { const f=i.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ fabric.Image.fromURL(e.target.result, img=>{ img.scaleToWidth(200); canvas.add(img); canvas.centerObject(img); })}; r.readAsDataURL(f); i.value=''; }
-        function toggleBullets() { const o = canvas.getActiveObject(); if(o && o.text) { const lines = o.text.split('\n'); const has = lines.every(l=>l.startsWith('• ')); o.set('text', lines.map(l=>has?l.substring(2):(l.trim()?'• '+l:l)).join('\n')); canvas.renderAll(); }}
-        function toggleNumbering() { const o = canvas.getActiveObject(); if(o && o.text) { const lines = o.text.split('\n'); const has = lines[0].startsWith('1. '); let c=1; o.set('text', lines.map(l=>has?l.replace(/^\d+\.\s/,''):(l.trim()?`${c++}. ${l}`:l)).join('\n')); canvas.renderAll(); }}
-
-        window.addEventListener('resize', resizeCanvas);
-        if (window.innerWidth < 768) document.getElementById('sidebar').classList.add('hidden');
-        slides[0] = JSON.stringify(canvas.toJSON());
-        setTimeout(resizeCanvas, 100);
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); setTimeout(resizeCanvas,350); }
+        window.addEventListener('resize', resizeCanvas); 
+        document.addEventListener('fullscreenchange', resizeCanvas);
+        
+        if(window.innerWidth<768)document.getElementById('sidebar').classList.add('hidden'); slides[0]=JSON.stringify(canvas.toJSON()); setTimeout(resizeCanvas,100);
     </script>
 </body>
 </html>
