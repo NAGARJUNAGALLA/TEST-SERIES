@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JCV Tuition Center - Advanced Study Material</title>
+    
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Gidugu&family=Ramabhadra&display=swap" rel="stylesheet">
+
+    <style>
+        :root { --primary-color: #4f46e5; --border-color: #cbd5e1; }
+        body { font-family: 'Times New Roman', Times, serif; margin: 0; padding: 20px; background-color: #e2e8f0; }
+
+        /* CONTROL PANEL */
+        .control-panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); max-width: 850px; margin: 0 auto 30px auto; border: 1px solid var(--border-color); position: relative; z-index: 100; }
+        .control-panel h2 { margin-top: 0; font-family: sans-serif; color: #333; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-family: sans-serif; margin-bottom: 5px; font-weight: bold; }
+        .input-group input, .input-group textarea, .input-group select { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 16px; box-sizing: border-box; }
+        .row { display: flex; gap: 20px; }
+        .col { flex: 1; }
+
+        /* TOOLBARS */
+        .toolbar-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; padding: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; align-items: center; }
+        .tool-btn { background: white; border: 1px solid #cbd5e1; padding: 6px 10px; cursor: pointer; font-weight: bold; font-family: sans-serif; border-radius: 4px; font-size: 14px; min-width: 32px; }
+        .tool-btn:hover { background: #e2e8f0; }
+        .tool-btn.active { background: #dbeafe; border-color: #2563eb; color: #2563eb; }
+        .divider-v { width: 1px; height: 24px; background: #cbd5e1; margin: 0 5px; }
+        #font-selector { width: 120px; padding: 5px; }
+        #size-input, #spacing-input { width: 60px; padding: 5px; }
+        #color-input { width: 40px; height: 30px; padding: 0; border: none; cursor: pointer; }
+        .visual-controls { display: flex; gap: 10px; align-items: center; background: #fffbeb; padding: 10px; border: 1px solid #fcd34d; border-radius: 4px; margin-bottom: 15px; }
+        .btn { background-color: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; font-family: sans-serif; margin-right: 10px; margin-bottom: 5px; }
+        .btn:hover { opacity: 0.9; }
+        .extra-controls { background: #f8fafc; padding: 15px; border: 1px dashed #cbd5e1; margin-bottom: 15px; display: none; flex-direction: column; gap: 10px; }
+        #table-input-grid, .mcq-input-grid, #matching-input-grid, #split-inputs { display: grid; gap: 10px; }
+        #table-input-grid, #split-inputs, .mcq-input-grid, #matching-input-grid { margin-top: 10px; }
+        #split-inputs textarea { height: 100px; resize: vertical; }
+
+        /* PAPER */
+        #paper-container { width: 210mm; margin: 0 auto; }
+        .paper-sheet { 
+            background: white; width: 210mm; height: 297mm; margin-bottom: 30px; padding: 15mm 20mm; 
+            box-shadow: 0 0 15px rgba(0,0,0,0.1); box-sizing: border-box; position: relative; overflow: hidden; 
+            display: flex; flex-direction: column; 
+        }
+        
+        .border-frame { position: absolute; top: 10mm; left: 10mm; right: 10mm; bottom: 10mm; border: 3px solid black; pointer-events: none; z-index: 10; }
+        .border-frame::after { content: ''; position: absolute; top: 3px; left: 3px; right: 3px; bottom: 3px; border: 1px solid black; }
+        .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); text-align: center; opacity: 0.10; z-index: 0; pointer-events: none; width: 100%; white-space: nowrap; }
+        .watermark h1 { font-size: 60pt; margin: 0; color: black; text-transform: uppercase; }
+        .watermark p { font-size: 30pt; margin: 0; color: black; text-transform: uppercase; }
+        
+        .paper-content { position: relative; z-index: 5; flex-grow: 1; padding: 5px; display: flex; flex-direction: column; }
+        .page-footer { position: absolute; bottom: 15mm; left: 0; width: 100%; text-align: center; font-size: 12pt; z-index: 5; font-family: 'Times New Roman', serif; }
+        .header-container { position: relative; margin-bottom: 5px; text-align: center; flex-shrink: 0; }
+        .main-header { font-size: 24pt; font-weight: bold; text-transform: uppercase; margin: 0; line-height: 1.1; }
+        .sub-header { font-size: 14pt; margin: 5px 0 0 0; font-weight: bold; line-height: 1.2; }
+        .divider-line { border-top: 2px solid black; margin-top: 10px; margin-bottom: 20px; }
+
+        ul.content-list { padding-left: 0; margin-top: 0; list-style: none; flex-grow: 1; overflow: visible; }
+        
+        .content-item { font-size: 14pt; margin-bottom: 12px; position: relative; display: flex; align-items: flex-start; }
+        
+        /* Marker Styling */
+        .item-marker { width: 45px; flex-shrink: 0; font-weight: bold; text-align: right; margin-right: 10px; }
+        
+        /* *** FIX: HIDE MARKER IF TYPE IS NONE *** */
+        .content-item.no-marker .item-marker { display: none; }
+        
+        .item-text { flex-grow: 1; white-space: pre-wrap; vertical-align: top; width: 100%; }
+
+        /* Styles */
+        .align-left { text-align: left; } .align-center { text-align: center; } .align-right { text-align: right; } .align-justify { text-align: justify; }
+        .font-english { font-family: 'Times New Roman', serif; } .font-telugu-1 { font-family: 'Gidugu', sans-serif; } .font-telugu-2 { font-family: 'Ramabhadra', sans-serif; }
+        
+        /* Layouts */
+        .col-flow-2 { column-count: 2; column-gap: 20px; column-rule: 1px solid #ccc; orphans: 1; widows: 1; }
+        .split-col-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
+        .split-col-item { vertical-align: top; text-align: justify; }
+
+        /* Visuals */
+        .q-image-container { display: block; margin: 10px 0; }
+        .q-image { max-width: 100%; height: auto; display: inline-block; }
+        .q-shape-container { display: block; margin: 10px 0; text-align: center; }
+        .q-shape-svg { display: inline-block; vertical-align: middle; stroke-width: 2; fill: none; }
+        .mcq-options-display { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 5px; }
+        .mcq-option-item { display: flex; align-items: baseline; flex: 1 0 21%; min-width: 120px; }
+        .matching-display { display: grid; grid-template-columns: 1fr 50px 1fr; width: 100%; margin-top: 10px; gap: 10px; }
+        .matching-row-a, .matching-row-b { display: flex; align-items: baseline; }
+        .matching-center { text-align: center; font-weight: bold; }
+        .match-marker { width: 30px; font-weight: bold; flex-shrink: 0; }
+        .q-table { border-collapse: collapse; margin-top: 5px; margin-bottom: 10px; width: 100%; }
+        .q-table td { border: 1px solid black; padding: 5px; min-width: 50px; height: 30px; vertical-align: middle; text-align: center; }
+        .delete-btn { position: absolute; right: -25px; top: 0; color: red; cursor: pointer; font-size: 16px; font-weight:bold; background: white; z-index: 20; }
+
+        @page { size: A4 portrait; margin: 0; }
+        @media print {
+            body, html { margin: 0; padding: 0; background: white; height: auto; }
+            .control-panel, .delete-btn { display: none !important; }
+            #paper-container { width: 100%; margin: 0; padding: 0; }
+            .paper-sheet { width: 100%; height: 297mm; margin: 0; padding: 15mm 20mm; box-shadow: none; border: none; page-break-after: always; page-break-inside: avoid; overflow: hidden; }
+            .paper-sheet:last-child { page-break-after: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="control-panel">
+        <h2>Study Material Maker</h2>
+        
+        <div class="row">
+            <div class="col input-group"><label>Header 1:</label><input type="text" id="header-1" value="JCV TUTION CENTER" oninput="updateHeaders()"></div>
+            <div class="col input-group" style="flex: 0 0 100px;"><label>Start Pg:</label><input type="number" id="start-page-no" value="1" min="1" onchange="updatePageNumbers()"></div>
+        </div>
+        <div class="input-group"><label>Header 2:</label><input type="text" id="header-2" value="EDEPALLI, MACHILIPATNAM, KRISHNA." oninput="updateHeaders()"></div>
+        <hr style="border-top: 1px dashed #ccc; margin: 20px 0;">
+
+        <div class="input-group">
+            <label>Add Content:</label>
+            <div class="toolbar-row">
+                <button class="tool-btn" onclick="insertTag('<b>', '</b>')"><b>B</b></button>
+                <button class="tool-btn" onclick="insertTag('<i>', '</i>')"><i>I</i></button>
+                <button class="tool-btn" onclick="insertTag('<u>', '</u>')"><u>U</u></button>
+                <div class="divider-v"></div>
+                <button class="tool-btn" onclick="insertTag('<sub>', '</sub>')">x<sub>2</sub></button>
+                <button class="tool-btn" onclick="insertTag('<sup>', '</sup>')">x<sup>2</sup></button>
+                <button class="tool-btn" onclick="insertTag('\\(', '\\)')">Math</button>
+                <div class="divider-v"></div>
+                <input type="color" id="color-input" title="Color" onchange="applyColor()">
+            </div>
+            <div class="toolbar-row">
+                <button class="tool-btn" onclick="setAlignment('left')" id="btn-align-left">Left</button>
+                <button class="tool-btn" onclick="setAlignment('center')" id="btn-align-center">Center</button>
+                <button class="tool-btn" onclick="setAlignment('right')" id="btn-align-right">Right</button>
+                <button class="tool-btn" onclick="setAlignment('justify')" id="btn-align-justify">Justify</button>
+                <div class="divider-v"></div>
+                <select id="font-selector">
+                    <option value="font-english">English</option>
+                    <option value="font-telugu-1">Telugu 1</option>
+                    <option value="font-telugu-2">Telugu 2</option>
+                </select>
+                <input type="number" id="size-input" value="14" min="10" max="36" title="Size">
+                <input type="number" id="spacing-input" value="1.4" step="0.1" min="0.8" max="2.5" title="Spacing">
+            </div>
+
+            <div class="visual-controls">
+                <label>Insert:</label>
+                <input type="file" id="image-upload" accept="image/*" style="width:180px;">
+                <select id="shape-select" style="width:100px;">
+                    <option value="none">Shape</option><option value="rect">Rect</option><option value="circle">Circle</option><option value="triangle">Triangle</option><option value="line">Line</option><option value="arrow-right">Arrow -></option><option value="arrow-down">Arrow V</option>
+                </select>
+                <input type="range" id="visual-width" min="10" max="100" value="50" title="Width">
+            </div>
+
+            <textarea id="content-text" rows="3" placeholder="Type content here..." onfocus="setFocus(this)"></textarea>
+            
+            <div id="split-inputs">
+                <div><label>Left Column:</label><textarea id="text-left" onfocus="setFocus(this)"></textarea></div>
+                <div><label>Right Column:</label><textarea id="text-right" onfocus="setFocus(this)"></textarea></div>
+            </div>
+
+            <div style="margin-top: 10px; background: #f0fdf4; padding: 10px; border-radius: 4px; border: 1px solid #bbf7d0;">
+                <label>Layout:</label>
+                <div style="margin-bottom: 5px;">
+                    <select id="col-layout" onchange="toggleExtraInputs()">
+                        <option value="single">Single Column</option>
+                        <option value="auto-flow">2-Column (Auto Flow)</option>
+                        <option value="separate">2-Column (Separate)</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <select id="item-symbol" style="flex: 1;">
+                        <option value="none">None (Paragraph)</option>
+                        <option disabled>--- NUMBERING ---</option>
+                        <option value="number">1, 2, 3...</option>
+                        <option value="roman-upper">I, II, III...</option>
+                        <option value="roman-lower">i, ii, iii...</option>
+                        <option value="alpha-upper">A, B, C...</option>
+                        <option value="alpha-lower">a, b, c...</option>
+                        <option value="telugu-num">౧, ౨, ౩...</option>
+                        <option disabled>--- BULLETS ---</option>
+                        <option value="disc">Dot (•)</option>
+                        <option value="circle">Circle (○)</option>
+                        <option value="arrow">Arrow (➢)</option>
+                        <option value="star">Star (★)</option>
+                        <option value="square">Square (■)</option>
+                        <option value="diamond">Diamond (◆)</option>
+                        <option value="triangle-r">Triangle (▶)</option>
+                        <option value="flower">Flower (✿)</option>
+                        <option value="check">Check (✔)</option>
+                        <option value="hand">Hand (☞)</option>
+                    </select>
+                    <label><input type="checkbox" id="restart-numbering"> <span style="color:red; font-weight:bold;">Restart #</span></label>
+                </div>
+            </div>
+
+            <div style="margin-top: 10px; display:flex; gap:15px; flex-wrap:wrap;">
+                <label><input type="checkbox" id="include-mcq" onchange="toggleExtraInputs()"> MCQ</label>
+                <label><input type="checkbox" id="include-table" onchange="toggleExtraInputs()"> Table</label>
+                <label><input type="checkbox" id="include-matching" onchange="toggleExtraInputs()"> Matching</label>
+            </div>
+
+            <div id="mcq-inputs" class="extra-controls">
+                <div class="mcq-input-grid">
+                    <input type="text" id="opt-a" placeholder="A"><input type="text" id="opt-b" placeholder="B">
+                    <input type="text" id="opt-c" placeholder="C"><input type="text" id="opt-d" placeholder="D">
+                </div>
+            </div>
+            <div id="table-inputs" class="extra-controls">
+                <div class="table-settings-row">
+                    Rows: <input type="number" id="tbl-rows" value="2" style="width:50px;" onchange="renderTableGrid()"> 
+                    Cols: <input type="number" id="tbl-cols" value="2" style="width:50px;" onchange="renderTableGrid()">
+                </div>
+                <div id="table-input-grid"></div>
+            </div>
+            <div id="matching-inputs" class="extra-controls">
+                Pairs: <input type="number" id="match-rows" value="4" style="width:50px;" onchange="renderMatchingGrid()">
+                <div id="matching-input-grid"></div>
+            </div>
+        </div>
+        
+        <button class="btn" onclick="addContent()">Add Content</button>
+        <button class="btn btn-page" onclick="addNewPage()">+ New Page</button>
+        <button class="btn btn-print" onclick="window.print()">Print</button>
+        <button class="btn btn-clear" onclick="location.reload()">Reset</button>
+    </div>
+
+    <div id="paper-container">
+        <div class="paper-sheet" id="page-1">
+            <div class="border-frame"></div>
+            <div class="watermark"><h1 class="wm-h1">JCV TUTION CENTER</h1><p class="wm-p">EDEPALLI, MACHILIPATNAM, KRISHNA.</p></div>
+            <div class="paper-content">
+                <div class="header-container">
+                    <h1 class="main-header" id="display-header-1">JCV TUTION CENTER</h1>
+                    <p class="sub-header" id="display-header-2">EDEPALLI, MACHILIPATNAM, KRISHNA.</p>
+                    <div class="divider-line"></div>
+                </div>
+                <ul id="content-list-1" class="content-list"></ul>
+            </div>
+            <div class="page-footer" id="footer-1">Page 1</div>
+        </div>
+    </div>
+
+    <script>
+        let pageCount = 1;
+        let activeInput = document.getElementById('content-text');
+        let currentAlign = 'left';
+
+        function setFocus(el) { activeInput = el; }
+        function insertTag(s, e) {
+            if(!activeInput) return;
+            const start = activeInput.selectionStart, end = activeInput.selectionEnd, val = activeInput.value;
+            activeInput.value = val.substring(0, start) + s + val.substring(start, end) + e + val.substring(end);
+            activeInput.focus();
+        }
+        function applyColor() { insertTag(`<span style="color:${document.getElementById('color-input').value}">`, `</span>`); }
+        function setAlignment(a) { 
+            currentAlign = a; 
+            ['left','center','right','justify'].forEach(x => document.getElementById(`btn-align-${x}`).className = 'tool-btn'+(x===a?' active':''));
+        }
+        function updatePageNumbers() {
+            const s = parseInt(document.getElementById('start-page-no').value)||1;
+            for(let i=1; i<=pageCount; i++) {
+                const f = document.getElementById(`footer-${i}`);
+                if(f) f.textContent = "Page " + (s+i-1);
+            }
+        }
+        function updateHeaders() {
+            const h1=document.getElementById('header-1').value, h2=document.getElementById('header-2').value;
+            document.querySelectorAll('.main-header').forEach(e=>e.textContent=h1);
+            document.querySelectorAll('.sub-header').forEach(e=>e.textContent=h2);
+            document.querySelectorAll('.wm-h1').forEach(e=>e.textContent=h1);
+            document.querySelectorAll('.wm-p').forEach(e=>e.textContent=h2);
+        }
+        
+        function toRoman(num, upper=true) {
+            const lookup = {M:1000,CM:900,D:500,CD:400,C:100,XC:90,L:50,XL:40,X:10,IX:9,V:5,IV:4,I:1};
+            let roman = '', i;
+            for ( i in lookup ) { while ( num >= lookup[i] ) { roman += i; num -= lookup[i]; } }
+            return upper ? roman : roman.toLowerCase();
+        }
+        function toAlpha(num, upper=true) {
+            let letter = String.fromCharCode(64 + num);
+            if(num > 26) letter = "AA";
+            return upper ? letter : letter.toLowerCase();
+        }
+        function toTeluguNum(num) {
+            const map = ['౦','౧','౨','౩','౪','౫','౬','౭','౮','౯'];
+            return num.toString().split('').map(d => map[d]).join('');
+        }
+
+        function renumberItems() {
+            let count = 1;
+            for(let i=1; i<=pageCount; i++) {
+                const list = document.getElementById(`content-list-${i}`);
+                if(!list) continue;
+                for(let item of list.children) {
+                    if(item.getAttribute('data-restart')==='true') count=1;
+                    const type = item.getAttribute('data-type');
+                    const m = item.querySelector('.item-marker');
+                    if(m) {
+                        let txt = "";
+                        if(type==='number') txt = count + ".";
+                        else if(type==='roman-upper') txt = toRoman(count, true) + ".";
+                        else if(type==='roman-lower') txt = toRoman(count, false) + ".";
+                        else if(type==='alpha-upper') txt = toAlpha(count, true) + ".";
+                        else if(type==='alpha-lower') txt = toAlpha(count, false) + ".";
+                        else if(type==='telugu-num') txt = toTeluguNum(count) + ".";
+                        
+                        if(txt) { m.textContent = txt; count++; }
+                    }
+                }
+            }
+        }
+
+        function toggleExtraInputs() {
+            const mode = document.getElementById('col-layout').value;
+            document.getElementById('split-inputs').style.display = (mode==='separate'?'grid':'none');
+            document.getElementById('content-text').style.display = (mode==='separate'?'none':'block');
+            activeInput = (mode==='separate'? document.getElementById('text-left') : document.getElementById('content-text'));
+
+            document.getElementById('mcq-inputs').style.display = document.getElementById('include-mcq').checked ? 'flex' : 'none';
+            const tbl = document.getElementById('include-table').checked;
+            document.getElementById('table-inputs').style.display = tbl ? 'flex' : 'none';
+            if(tbl) renderTableGrid();
+            const mtch = document.getElementById('include-matching').checked;
+            document.getElementById('matching-inputs').style.display = mtch ? 'flex' : 'none';
+            if(mtch) renderMatchingGrid();
+        }
+        function renderTableGrid() {
+            const r=document.getElementById('tbl-rows').value, c=document.getElementById('tbl-cols').value, g=document.getElementById('table-input-grid');
+            g.style.gridTemplateColumns=`repeat(${c},1fr)`; g.innerHTML='';
+            for(let i=0; i<r*c; i++) {
+                const inp = document.createElement('input'); inp.type='text'; g.appendChild(inp);
+            }
+        }
+        function renderMatchingGrid() {
+            const r=document.getElementById('match-rows').value, g=document.getElementById('matching-input-grid');
+            g.innerHTML='';
+            for(let i=0; i<r; i++) {
+                const a=document.createElement('input'), b=document.createElement('input');
+                a.placeholder=`Left ${i+1}`; b.placeholder=`Right ${i+1}`; a.id=`match-l-${i}`; b.id=`match-r-${i}`;
+                g.appendChild(a); g.appendChild(b);
+            }
+        }
+        
+        function addNewPage() {
+            pageCount++;
+            const c = document.getElementById('paper-container');
+            const d = document.createElement('div'); d.className='paper-sheet'; d.id=`page-${pageCount}`;
+            const h1=document.getElementById('header-1').value, h2=document.getElementById('header-2').value;
+            d.innerHTML = `<div class="border-frame"></div><div class="watermark"><h1 class="wm-h1">${h1}</h1><p class="wm-p">${h2}</p></div><div class="paper-content"><ul id="content-list-${pageCount}" class="content-list"></ul></div><div class="page-footer" id="footer-${pageCount}"></div>`;
+            c.appendChild(d); updatePageNumbers(); return d;
+        }
+
+        // --- ROBUST AUTO FLOW ---
+        function checkAutoFlow(item) {
+            const currentSheet = document.getElementById(`page-${pageCount}`);
+            // Check overflow. Use a buffer (30px)
+            if (currentSheet.scrollHeight > currentSheet.clientHeight + 2) {
+                const complex = item.querySelector('table') || item.querySelector('.mcq-options-display') || item.querySelector('.q-image-container') || item.querySelector('.q-shape-container') || item.querySelector('.matching-display') || item.querySelector('.split-col-container');
+                
+                if(complex) {
+                    const newSheet = addNewPage();
+                    const list = newSheet.querySelector('.content-list');
+                    list.appendChild(item);
+                    if(newSheet.scrollHeight > newSheet.clientHeight + 2) {
+                        // safety break
+                    }
+                } else {
+                    splitText(item, currentSheet);
+                }
+            }
+        }
+
+        function splitText(item, sheet) {
+            const textDiv = item.querySelector('.item-text div'); 
+            if(!textDiv) return;
+
+            const newSheet = addNewPage();
+            const newList = newSheet.querySelector('.content-list');
+
+            // Create Continuation Item
+            const cont = document.createElement('li');
+            cont.className = item.className; // Keep font/align classes
+            cont.setAttribute('data-type', 'none'); // No bullet for continuation
+            cont.style.fontSize = item.style.fontSize;
+            cont.style.lineHeight = item.style.lineHeight;
+
+            // Prepare structure
+            cont.innerHTML = `<div class="item-marker"></div><div class="item-text"></div>`;
+            const contTextContainer = cont.querySelector('.item-text');
+            
+            // Re-create the inner div with same classes (e.g. col-flow-2)
+            const newInnerDiv = document.createElement('div');
+            newInnerDiv.className = textDiv.className; 
+            if(textDiv.getAttribute('style')) newInnerDiv.setAttribute('style', textDiv.getAttribute('style'));
+            contTextContainer.appendChild(newInnerDiv);
+
+            newList.appendChild(cont);
+
+            // Split Logic
+            let fullText = textDiv.innerHTML;
+            let words = fullText.split(' ');
+            let moved = [];
+            let safety = 0; 
+
+            // Move words from Bottom of Old Page -> Top of New Page
+            while(sheet.scrollHeight > sheet.clientHeight && words.length > 0 && safety < 10000) {
+                moved.unshift(words.pop());
+                textDiv.innerHTML = words.join(' ');
+                safety++;
+            }
+
+            newInnerDiv.innerHTML = moved.join(' ');
+
+            if(words.length === 0) item.remove(); 
+
+            // Recursive check for the new item on the new page
+            if(newSheet.scrollHeight > newSheet.clientHeight) checkAutoFlow(cont);
+        }
+
+        function addContent() {
+            const text = document.getElementById('content-text').value;
+            const tL = document.getElementById('text-left').value, tR = document.getElementById('text-right').value;
+            const mode = document.getElementById('col-layout').value;
+            const sym = document.getElementById('item-symbol').value;
+            const restart = document.getElementById('restart-numbering').checked;
+            const font = document.getElementById('font-selector').value;
+            const size = document.getElementById('size-input').value + 'pt';
+            const space = document.getElementById('spacing-input').value;
+            
+            const hasExtra = document.getElementById('include-table').checked || document.getElementById('include-mcq').checked || document.getElementById('include-matching').checked || document.getElementById('image-upload').files[0] || document.getElementById('shape-select').value !== 'none';
+            if(mode==='separate' && tL.trim()==='' && tR.trim()==='') return;
+            if(mode!=='separate' && text.trim()==='' && !hasExtra) return;
+
+            const list = document.getElementById(`content-list-${pageCount}`);
+            const li = document.createElement('li');
+            li.className = `content-item align-${currentAlign} ${font}`;
+            li.style.fontSize = size; li.style.lineHeight = space;
+            li.setAttribute('data-type', sym);
+            if(restart) li.setAttribute('data-restart', 'true');
+            if(sym === 'none') li.classList.add('no-marker');
+
+            let mHTML = "";
+            if(sym==='disc') mHTML="•"; 
+            else if(sym==='circle') mHTML="○"; 
+            else if(sym==='arrow') mHTML="➢";
+            else if(sym==='star') mHTML="★";
+            else if(sym==='square') mHTML="■";
+            else if(sym==='diamond') mHTML="◆";
+            else if(sym==='triangle-r') mHTML="▶";
+            else if(sym==='flower') mHTML="✿";
+            else if(sym==='check') mHTML="✔";
+            else if(sym==='hand') mHTML="☞";
+            else if(['number','roman-upper','roman-lower','alpha-upper','alpha-lower','telugu-num'].includes(sym)) mHTML="1.";
+
+            li.innerHTML = `<div class="item-marker">${mHTML}</div><div class="item-text"></div>`;
+            const div = li.querySelector('.item-text');
+
+            if(mode==='separate') {
+                const s = document.createElement('div'); s.className='split-col-container';
+                s.innerHTML = `<div class="split-col-item">${tL.replace(/\n/g,'<br>')}</div><div class="split-col-item">${tR.replace(/\n/g,'<br>')}</div>`;
+                div.appendChild(s);
+            } else if(text) {
+                const t = document.createElement('div');
+                if(mode==='auto-flow') t.className='col-flow-2';
+                t.innerHTML = text; 
+                div.appendChild(t);
+            }
+
+            // Image
+            const file = document.getElementById('image-upload').files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const w = document.getElementById('visual-width').value;
+                    const d = document.createElement('div'); d.className='q-image-container'; d.style.textAlign=currentAlign;
+                    d.innerHTML = `<img src="${e.target.result}" class="q-image" style="width:${w}%">`;
+                    div.appendChild(d);
+                    setTimeout(()=>checkAutoFlow(li), 50);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // Shape
+            const shp = document.getElementById('shape-select').value;
+            if(shp!=='none') {
+                const w = document.getElementById('visual-width').value, clr = document.getElementById('color-input').value;
+                const d = document.createElement('div'); d.className='q-shape-container'; d.style.textAlign=currentAlign;
+                let svg = `<svg width="${w*2}" height="${w}" viewBox="0 0 100 50" class="q-shape-svg" style="stroke:${clr}; fill:none;">`;
+                if(shp==='rect') svg+=`<rect x="5" y="5" width="90" height="40"/>`;
+                else if(shp==='circle') svg+=`<circle cx="50" cy="25" r="20"/>`;
+                else if(shp==='triangle') svg+=`<polygon points="50,5 90,45 10,45"/>`;
+                else if(shp==='line') svg+=`<line x1="5" y1="25" x2="95" y2="25"/>`;
+                else if(shp==='arrow-right') { svg+=`<defs><marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="${clr}"/></marker></defs><line x1="5" y1="25" x2="90" y2="25" stroke-width="2" marker-end="url(#ar)"/>`; }
+                else if(shp==='arrow-down') { svg=`<svg width="${w}" height="${w*2}" viewBox="0 0 50 100" class="q-shape-svg" style="stroke:${clr}; fill:none;"><defs><marker id="ad" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="${clr}"/></marker></defs><line x1="25" y1="5" x2="25" y2="90" stroke-width="2" marker-end="url(#ad)"/>`; }
+                svg+=`</svg>`; d.innerHTML=svg; div.appendChild(d);
+            }
+
+            if(document.getElementById('include-mcq').checked) {
+                const c = document.createElement('div'); c.className='mcq-options-display';
+                ['a','b','c','d'].forEach(x => {
+                    const v = document.getElementById(`opt-${x}`).value;
+                    if(v) c.innerHTML += `<div class="mcq-option-item"><span class="mcq-label">(${x})</span><span>${v}</span></div>`;
+                });
+                div.appendChild(c);
+            }
+
+            if(document.getElementById('include-table').checked) {
+                const tbl = document.createElement('table'); tbl.className='q-table';
+                const r=document.getElementById('tbl-rows').value, c=document.getElementById('tbl-cols').value, inps=document.getElementById('table-input-grid').querySelectorAll('input');
+                let idx=0;
+                for(let i=0; i<r; i++){
+                    const tr=document.createElement('tr');
+                    for(let j=0; j<c; j++){
+                        const td=document.createElement('td'); td.innerHTML=inps[idx]?inps[idx].value:''; td.contentEditable=true; tr.appendChild(td); idx++;
+                    }
+                    tbl.appendChild(tr);
+                }
+                div.appendChild(tbl);
+            }
+
+            if(document.getElementById('include-matching').checked) {
+                const m = document.createElement('div'); m.className='matching-display';
+                const r = document.getElementById('match-rows').value;
+                for(let i=0; i<r; i++) {
+                    const l=document.getElementById(`match-l-${i}`).value, rt=document.getElementById(`match-r-${i}`).value;
+                    m.innerHTML+=`<div style="display:flex;align-items:baseline"><span class="match-marker">${toRoman(i+1, false)}.</span><span>${l}</span></div><div class="matching-center">( )</div><div style="display:flex;align-items:baseline"><span class="match-marker">${String.fromCharCode(97+i)}.</span><span>${rt}</span></div>`;
+                }
+                div.appendChild(m);
+            }
+
+            const del = document.createElement('span'); del.textContent='×'; del.className='delete-btn';
+            del.onclick = function(){ li.remove(); renumberItems(); };
+            li.appendChild(del);
+            list.appendChild(li);
+
+            if(window.MathJax) MathJax.typesetPromise([li]).then(()=>{});
+            
+            if(!file) setTimeout(()=>checkAutoFlow(li), 20);
+            renumberItems();
+
+            document.getElementById('content-text').value=''; 
+            document.getElementById('text-left').value=''; document.getElementById('text-right').value='';
+            document.getElementById('include-mcq').checked=false; document.getElementById('include-table').checked=false; document.getElementById('include-matching').checked=false; document.getElementById('restart-numbering').checked=false;
+            document.getElementById('shape-select').value='none'; document.getElementById('image-upload').value='';
+            ['a','b','c','d'].forEach(x=>document.getElementById(`opt-${x}`).value='');
+            toggleExtraInputs();
+            document.getElementById('content-text').focus();
+            setFocus(document.getElementById('content-text'));
+        }
+    </script>
+</body>
+</html>
