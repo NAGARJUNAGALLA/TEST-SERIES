@@ -536,9 +536,18 @@
             }
 
             const del = document.createElement('span'); del.textContent='×'; del.className='delete-btn';
-            del.onclick = function(){ li.remove(); renumberItems(); };
-            li.appendChild(del);
-            list.appendChild(li);
+            del.onclick = function() { 
+    const linkId = li.getAttribute('data-split-link');
+    if (linkId) {
+        document.querySelectorAll(`[data-split-link="${linkId}"]`).forEach(el => el.remove());
+    } else {
+        li.remove();
+    }
+    
+    // Trigger the reflow to fill the empty space
+    reflowAllContent(); 
+};
+
 
             if(window.MathJax) MathJax.typesetPromise([li]).then(()=>{});
             
@@ -554,6 +563,31 @@
             document.getElementById('content-text').focus();
             setFocus(document.getElementById('content-text'));
         }
+        function reflowAllContent() {
+    // 1. Collect all items from all pages into an array
+    const allItems = Array.from(document.querySelectorAll('.content-item'));
+    
+    // 2. Clear all pages except the first one
+    const container = document.getElementById('paper-container');
+    const firstList = document.getElementById('content-list-1');
+    
+    // Remove all pages after page 1
+    const extraSheets = document.querySelectorAll('.paper-sheet:not(#page-1)');
+    extraSheets.forEach(sheet => sheet.remove());
+    pageCount = 1;
+    firstList.innerHTML = '';
+
+    // 3. Re-add every item and let the auto-flow handle the spacing
+    allItems.forEach(item => {
+        const currentList = document.getElementById(`content-list-${pageCount}`);
+        currentList.appendChild(item);
+        checkAutoFlow(item); // This forces content to move to new pages if needed
+    });
+
+    renumberItems();
+    updatePageNumbers();
+        }
+        
     </script>
 </body>
 </html>
