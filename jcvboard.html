@@ -305,7 +305,7 @@
         </div>
     </div>
 
-    <script>
+            <script>
         const BASE_WIDTH = 800;
         const BASE_HEIGHT = 450;
         let isPresentationMode = false;
@@ -315,9 +315,9 @@
         let mediaRecorder;
         let recordedChunks = [];
         let isRecording = false;
+        
         let currentConfigType = null;
         let activeEditGroup = null;
-        let currentTextAlign = 'left';
 
         const canvas = new fabric.Canvas('slideCanvas', {
             width: BASE_WIDTH,
@@ -330,77 +330,150 @@
         canvas.freeDrawingBrush.width = 3;
         canvas.freeDrawingBrush.color = "#ff0000";
 
-        // --- GLOBAL STYLING FUNCTIONS ---
-        
-        function changeObjColor(hex) {
-            const obj = canvas.getActiveObject();
-            if(!obj) return;
-            if (obj.type === 'group') {
-                obj.getObjects().forEach(child => {
-                    if (child.type === 'text' || child.type === 'i-text' || child.type === 'textbox') {
-                        child.set('fill', hex);
-                    } else if (child.type === 'group' && child.getObjects) { 
-                         child.getObjects().forEach(path => { if(path.set) path.set('fill', hex); });
-                    } else if (child.type === 'path') { child.set('fill', hex); }
-                });
-                obj.addWithUpdate();
-            } else if (obj.customType === 'math' && obj.getObjects) {
-                obj.getObjects().forEach(path => { if(path.set) path.set('fill', hex); });
-                 obj.addWithUpdate();
-            } else { obj.set('fill', hex); }
-            canvas.renderAll();
-        }
+        // --- DOUBLE CLICK TO EDIT ---
+        canvas.on('mouse:dblclick', function(e) {
+            let target = e.target;
+            if(target && !target.customType && target.group) {
+                target = target.group;
+            }
+            if(target && target.customType) {
+                openConfig(target.customType, target);
+            }
+        });
 
-        function setTextAlign(align) {
-            currentTextAlign = align;
-            const obj = canvas.getActiveObject();
-            if(obj) {
-                if(obj.type === 'textbox' || obj.type === 'i-text') {
-                    obj.set('textAlign', align);
+        // --- MODAL LOGIC (UPDATED WITH TEXTAREAS) ---
+        function openConfig(type, existingGroup = null) {
+            currentConfigType = type;
+            activeEditGroup = existingGroup;
+            const modal = document.getElementById('configModal');
+            const title = document.getElementById('modalTitle');
+            const body = document.getElementById('modalBody');
+            
+            modal.style.display = 'flex';
+            body.innerHTML = ''; 
+
+            let data = existingGroup ? existingGroup.customData : null;
+
+            if (type === 'mcq') {
+                title.innerText = existingGroup ? "Edit MCQ" : "Add MCQ";
+                body.innerHTML = `
+                    <label>Question:</label>
+                    <textarea id="inpQ" rows="2">${data ? data.q : 'Question?'}</textarea>
+                    <label>Options (Math supported):</label>
+                    <textarea id="inpA" rows="1">${data ? data.o[0] : 'Option A'}</textarea>
+                    <textarea id="inpB" rows="1">${data ? data.o[1] : 'Option B'}</textarea>
+                    <textarea id="inpC" rows="1">${data ? data.o[2] : 'Option C'}</textarea>
+                    <textarea id="inpD" rows="1">${data ? data.o[3] : 'Option D'}</textarea>
+                    <p style="font-size:0.7rem; color:#666;">Use $...$ for math. Press Enter for new lines.</p>
+                `;
+            } 
+            else if (type === 'matching') {
+                title.innerText = existingGroup ? "Edit Matching" : "Add Matching";
+                const pairs = data ? data.pairs : [['A','1'], ['B','2'], ['C','3'], ['D','4']];
+                let html = '<label>Pairs (Math supported):</label>';
+                for(let i=0; i<4; i++) {
+                    html += `<div style="display:flex; gap:5px; margin-bottom:5px;">
+                        <textarea id="mL${i}" placeholder="Left">${pairs[i][0]}</textarea>
+                        <textarea id="mR${i}" placeholder="Right">${pairs[i][1]}</textarea>
+                    </div>`;
                 }
-                else if(obj.type === 'group') {
-                     obj.getObjects().forEach(child => {
-                        if(child.type === 'textbox' || child.type === 'i-text') {
-                            child.set('textAlign', align);
+                body.innerHTML = html;
+            } 
+            else if (type === 'table') {
+                title.innerText = existingGroup ? "Edit Table" : "Create Table";
+                if (existingGroup) {
+                    const rows = data.rows; const cols = data.cols; const cells = data.cells || [];
+                    let gridHtml = `<div class="table-grid-editor" style="grid-template-columns: repeat(${cols}, 1fr);">`;
+                    let cellIdx = 0;
+                    for(let r=0; r<rows; r++) {
+                        for(let c=0; c<cols; c++) {
+                            const val = cells[cellIdx] || '';
+                            gridHtml += `<textarea class="tbl-cell-inp">${val}</textarea>`;
+                            cellIdx++;
                         }
-                    });
-                     obj.addWithUpdate();
+                    }
+                    gridHtml += `</div>`;
+                    body.innerHTML = `<label>Edit Cells (Math supported):</label>` + gridHtml +
+                        `<input type="hidden" id="inpRows" value="${rows}">` +
+                        `<input type="hidden" id="inpCols" value="${cols}">`;
+                } else {
+                    body.innerHTML = `
+                        <label>Rows:</label> <input type="number" id="inpRows" value="3" min="1" max="8">
+                        <label>Columns:</label> <input type="number" id="inpCols" value="3" min="1" max="5">
+                        <p style="font-size:0.8rem; color:#666;">Double-click table after insert to edit cells.</p>
+                    `;
                 }
-                canvas.renderAll();
+            } 
+            else if (type === 'math') {
+                title.innerText = "Math Formula";
+                body.innerHTML = `
+                    <label>LaTeX Code:</label>
+                    <textarea id="inpMath" rows="3">${data ? data.latex : 'x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}'}</textarea>
+                `;
             }
         }
 
-        function changeFont(fontName) {
-            const obj = canvas.getActiveObject();
-            if (obj) {
-                if (obj.type === 'i-text' || obj.type === 'textbox') { obj.set('fontFamily', fontName); } 
-                else if (obj.type === 'group') {
-                    obj._objects.forEach(child => { if (child.type === 'i-text' || child.type === 'textbox') { child.set('fontFamily', fontName); } });
+        function closeModal() {
+            document.getElementById('configModal').style.display = 'none';
+            currentConfigType = null;
+            activeEditGroup = null;
+        }
+
+        async function saveConfig() {
+            let newData = {};
+            if (currentConfigType === 'mcq') {
+                newData.q = document.getElementById('inpQ').value;
+                newData.o = [
+                    document.getElementById('inpA').value, document.getElementById('inpB').value,
+                    document.getElementById('inpC').value, document.getElementById('inpD').value
+                ];
+                await drawMCQ(newData);
+            } 
+            else if (currentConfigType === 'matching') {
+                newData.pairs = [];
+                for(let i=0; i<4; i++) {
+                    newData.pairs.push([ document.getElementById('mL'+i).value, document.getElementById('mR'+i).value ]);
                 }
-                canvas.renderAll();
+                await drawMatching(newData);
+            } 
+            else if (currentConfigType === 'table') {
+                newData.rows = parseInt(document.getElementById('inpRows').value) || 3;
+                newData.cols = parseInt(document.getElementById('inpCols').value) || 3;
+                const inputs = document.querySelectorAll('.tbl-cell-inp');
+                if (inputs.length > 0) {
+                    newData.cells = Array.from(inputs).map(inp => inp.value);
+                } else {
+                    newData.cells = new Array(newData.rows * newData.cols).fill(" ");
+                }
+                await drawTable(newData);
             }
+            else if (currentConfigType === 'math') {
+                const latex = document.getElementById('inpMath').value;
+                await drawMath(latex);
+            }
+            closeModal();
         }
 
-        function toggleBold() {
-            const obj = canvas.getActiveObject();
-            if(obj && (obj.type === 'i-text' || obj.type === 'textbox')) {
-                obj.set('fontWeight', obj.fontWeight === 'bold' ? 'normal' : 'bold'); canvas.renderAll();
+        // --- RENDERING HELPERS ---
+        function splitTextSmart(text) {
+            const lines = [];
+            let current = "";
+            let inMath = false;
+            for (let i = 0; i < text.length; i++) {
+                const c = text[i];
+                if (c === '$') inMath = !inMath;
+                if (c === '\n' && !inMath) {
+                    lines.push(current);
+                    current = "";
+                } else {
+                    current += c;
+                }
             }
+            if (current) lines.push(current);
+            return lines;
         }
 
-        function toggleItalic() {
-            const obj = canvas.getActiveObject();
-            if(obj && (obj.type === 'i-text' || obj.type === 'textbox')) {
-                obj.set('fontStyle', obj.fontStyle === 'italic' ? 'normal' : 'italic'); canvas.renderAll();
-            }
-        }
-
-        // --- RENDER CONTENT ---
-        async function renderContent(text, fontSize, width) {
-            let font = document.getElementById('fontSelect').value;
-            let color = document.getElementById('textColorPicker').value;
-            let align = currentTextAlign;
-
+        async function renderLine(text, fontSize, width) {
             const hasMath = text.includes('$');
             if (hasMath) {
                 let latexStr = text;
@@ -408,8 +481,11 @@
                 if(parts.length > 1) {
                     latexStr = "";
                     parts.forEach((part, idx) => {
-                        if(idx % 2 === 0) { const cleanPart = part.replace(/\n/g, ' \\\\ '); if(cleanPart.trim() !== "") latexStr += `\\text{${cleanPart}} `; } 
-                        else { latexStr += `${part} `; }
+                        if(idx % 2 === 0) { // Text
+                            if(part.trim() !== "") latexStr += `\\text{${part}} `;
+                        } else { // Math
+                            latexStr += `${part} `;
+                        }
                     });
                 }
                 try {
@@ -418,255 +494,345 @@
                     return new Promise((resolve) => {
                         fabric.loadSVGFromString(svgStr, (objects, options) => {
                             const obj = fabric.util.groupSVGElements(objects, options);
-                            obj.getObjects().forEach(o => o.set('fill', color));
-                            const desiredH = fontSize * 1.5; const scale = desiredH / obj.height;
+                            const desiredH = fontSize * 1.5; 
+                            const scale = desiredH / obj.height;
                             obj.scale(scale);
                             if (obj.width * obj.scaleX > width) obj.scaleToWidth(width);
                             resolve(obj);
                         });
                     });
-                } catch(e) { return new fabric.Textbox(text + " (Error)", { fontSize: fontSize, width: width, fontFamily: font, fill: color, textAlign: align }); }
+                } catch(e) {
+                    return new fabric.Textbox(text + " (Error)", { fontSize: fontSize, width: width });
+                }
             } else {
-                return new fabric.Textbox(text, { fontSize: fontSize, width: width, splitByGrapheme: false, fontFamily: font, fill: color, textAlign: align, breakWords: true });
+                return new fabric.Textbox(text, { fontSize: fontSize, width: width, splitByGrapheme: false });
             }
         }
 
-        // --- DYNAMIC DRAWING FUNCTIONS ---
+        async function renderBlock(text, fontSize, width, align = 'left') {
+            const lines = splitTextSmart(text);
+            const objects = [];
+            let currentY = 0;
+            let maxW = 0;
+
+            for (const line of lines) {
+                if (!line.trim()) { currentY += fontSize; continue; }
+                const obj = await renderLine(line, fontSize, width);
+                obj.set({ originX: align, originY: 'top', left: 0, top: currentY });
+                objects.push(obj);
+                const objH = obj.height * obj.scaleY;
+                const objW = obj.width * obj.scaleX;
+                currentY += objH + 8;
+                if (objW > maxW) maxW = objW;
+            }
+            return new fabric.Group(objects, { originX: align, originY: 'top' });
+        }
+
+        // --- DRAWING FUNCTIONS ---
 
         async function drawMCQ(data) {
-            if (activeEditGroup) { var t=activeEditGroup.top; var l=activeEditGroup.left; canvas.remove(activeEditGroup); } else { var t=50; var l=50; }
-            const qObj = await renderContent(data.q, 24, 600); qObj.set({ top: 0, left: 0 });
-            const objects = [qObj]; let currentTop = (qObj.height * qObj.scaleY) + 25;
+            if (activeEditGroup) { var t=activeEditGroup.top; var l=activeEditGroup.left; canvas.remove(activeEditGroup); } 
+            else { var t=50; var l=50; }
+
+            const qObj = await renderBlock(data.q, 24, 600, 'left');
+            qObj.set({ top: 0, left: 0 });
+            
+            const objects = [qObj];
+            let currentTop = (qObj.height * qObj.scaleY) + 25;
+
             for(let i=0; i<data.o.length; i++) {
                 const circle = new fabric.Circle({ radius: 8, fill: 'transparent', stroke: '#333', strokeWidth: 2, top: currentTop + 5, left: 0 });
-                const optObj = await renderContent(data.o[i], 20, 550); optObj.set({ top: currentTop, left: 30 });
-                objects.push(circle, optObj); currentTop += Math.max((optObj.height * optObj.scaleY), 30) + 15;
+                const optObj = await renderBlock(data.o[i], 20, 550, 'left');
+                optObj.set({ top: currentTop, left: 30 });
+                objects.push(circle, optObj);
+                currentTop += Math.max((optObj.height * optObj.scaleY), 30) + 15;
             }
-            const group = new fabric.Group(objects, { top: t, left: l }); group.customType = 'mcq'; group.customData = data; finishObject(group);
+
+            const group = new fabric.Group(objects, { top: t, left: l });
+            group.customType = 'mcq'; group.customData = data;
+            finishObject(group);
         }
 
         async function drawMatching(data) {
-            if (activeEditGroup) { var t=activeEditGroup.top; var l=activeEditGroup.left; canvas.remove(activeEditGroup); } else { var t=50; var l=50; }
-            const objects = []; let currentTop = 0; const colWidth = 200;
+            if (activeEditGroup) { var t=activeEditGroup.top; var l=activeEditGroup.left; canvas.remove(activeEditGroup); } 
+            else { var t=50; var l=50; }
+
+            const objects = [];
+            let currentTop = 0;
+            
             for(let i=0; i<data.pairs.length; i++) {
-                const lObj = await renderContent(data.pairs[i][0], 20, colWidth); lObj.set({ top: currentTop, left: 0, originX: 'left' });
-                const rObj = await renderContent(data.pairs[i][1], 20, colWidth); rObj.set({ top: currentTop, left: colWidth + 120, originX: 'left' });
-                const rowH = Math.max((lObj.height * lObj.scaleY), (rObj.height * rObj.scaleY), 30);
-                const dotY = currentTop + (rowH / 2) - 4;
-                const dotL = new fabric.Circle({ radius: 4, fill:'#333', top: dotY, left: colWidth + 10 });
-                const dotR = new fabric.Circle({ radius: 4, fill:'#333', top: dotY, left: colWidth + 110 });
-                objects.push(lObj, dotL, dotR, rObj); currentTop += rowH + 20;
+                const lObj = await renderBlock(data.pairs[i][0], 20, 150, 'left');
+                const rObj = await renderBlock(data.pairs[i][1], 20, 150, 'left');
+                const hL = lObj.height * lObj.scaleY;
+                const hR = rObj.height * rObj.scaleY;
+                const rowH = Math.max(hL, hR, 30);
+                lObj.set({ top: currentTop + (rowH - hL)/2, left: 0 });
+                rObj.set({ top: currentTop + (rowH - hR)/2, left: 270 });
+                const dotY = currentTop + rowH/2 - 2;
+                const dotL = new fabric.Circle({ radius: 4, fill:'#333', top: dotY, left: 160 });
+                const dotR = new fabric.Circle({ radius: 4, fill:'#333', top: dotY, left: 250 });
+                objects.push(lObj, dotL, dotR, rObj);
+                currentTop += rowH + 20;
             }
-            const group = new fabric.Group(objects, { top: t, left: l }); group.customType = 'matching'; group.customData = data; finishObject(group);
+
+            const group = new fabric.Group(objects, { top: t, left: l });
+            group.customType = 'matching'; group.customData = data;
+            finishObject(group);
         }
 
         async function drawTable(data) {
-            if (activeEditGroup) { var t=activeEditGroup.top; var l=activeEditGroup.left; canvas.remove(activeEditGroup); } else { var t=50; var l=50; }
-            const cellW = 180; const objects = []; let currentY = 0; let cellIdx = 0;
+            if (activeEditGroup) { var t=activeEditGroup.top; var l=activeEditGroup.left; canvas.remove(activeEditGroup); } 
+            else { var t=50; var l=50; }
+
+            const cellW = 150; 
+            const minCellH = 50; 
+            const objects = [];
+            let cellIdx = 0;
+            let rowHeights = [];
+            let renderedCells = []; 
+
             for(let r=0; r<data.rows; r++){
-                let rowContentObjs = []; let maxH = 40;
+                let maxH = minCellH;
+                renderedCells[r] = [];
                 for(let c=0; c<data.cols; c++){
-                    const contentText = data.cells[cellIdx + c] || " ";
-                    const contentObj = await renderContent(contentText, 18, cellW - 10);
-                    const actualH = contentObj.height * contentObj.scaleY; if(actualH > maxH) maxH = actualH;
-                    rowContentObjs.push(contentObj);
+                    const contentText = data.cells[cellIdx] || " ";
+                    const contentObj = await renderBlock(contentText, 18, cellW-10, 'center');
+                    renderedCells[r][c] = contentObj;
+                    const h = contentObj.height * contentObj.scaleY;
+                    if (h + 20 > maxH) maxH = h + 20;
+                    cellIdx++;
                 }
-                const rowH = maxH + 20; 
+                rowHeights.push(maxH);
+            }
+
+            let currentY = 0;
+            for(let r=0; r<data.rows; r++){
+                let h = rowHeights[r];
                 for(let c=0; c<data.cols; c++){
-                    const rect = new fabric.Rect({ width: cellW, height: rowH, fill: 'transparent', stroke:'#333', strokeWidth:1, top: currentY, left: c*cellW });
-                    const obj = rowContentObjs[c];
-                    const objH = obj.height * obj.scaleY; const objW = obj.width * obj.scaleX;
-                    obj.set({ top: currentY + (rowH - objH)/2, left: c*cellW + (cellW - objW)/2 });
+                    const rect = new fabric.Rect({ width: cellW, height: h, fill: 'transparent', stroke:'#333', strokeWidth:1, top: currentY, left: c*cellW });
+                    const obj = renderedCells[r][c];
+                    const objH = obj.height * obj.scaleY;
+                    const objW = obj.width * obj.scaleX;
+                    obj.set({ top: currentY + (h - objH)/2, left: c*cellW + (cellW - objW)/2 });
                     objects.push(rect, obj);
                 }
-                cellIdx += data.cols; currentY += rowH;
+                currentY += h;
             }
-            const group = new fabric.Group(objects, { top: t, left: l }); group.customType = 'table'; group.customData = data; finishObject(group);
+
+            const group = new fabric.Group(objects, { top: t, left: l });
+            group.customType = 'table'; group.customData = data;
+            finishObject(group);
         }
 
         async function drawMath(latex) {
-            if (activeEditGroup) { var t=activeEditGroup.top; var l=activeEditGroup.left; canvas.remove(activeEditGroup); } else { var t=100; var l=100; }
-            const color = document.getElementById('textColorPicker').value;
+            if (activeEditGroup) { var t=activeEditGroup.top; var l=activeEditGroup.left; canvas.remove(activeEditGroup); } 
+            else { var t=100; var l=100; }
+
             const svg = await MathJax.tex2svgPromise(latex);
             const svgStr = svg.querySelector('svg').outerHTML;
+
             fabric.loadSVGFromString(svgStr, (objects, options) => {
                 const mathObj = fabric.util.groupSVGElements(objects, options);
-                mathObj.getObjects().forEach(o => o.set('fill', color));
-                mathObj.scale(30 / mathObj.height); mathObj.set({ left: l, top: t });
-                mathObj.customType = 'math'; mathObj.customData = { latex: latex }; finishObject(mathObj);
+                const targetH = 30;
+                const scale = targetH / mathObj.height;
+                mathObj.scale(scale);
+                mathObj.set({ left: l, top: t });
+                mathObj.customType = 'math';
+                mathObj.customData = { latex: latex };
+                finishObject(mathObj);
             });
         }
 
         function finishObject(group) {
-            if (!activeEditGroup && group.width > BASE_WIDTH * 0.9) group.scaleToWidth(BASE_WIDTH * 0.9);
-            canvas.add(group); canvas.centerObject(group); canvas.setActiveObject(group); canvas.requestRenderAll(); updateEditButton();
+            if (!activeEditGroup && group.width > BASE_WIDTH * 0.95) {
+                group.scaleToWidth(BASE_WIDTH * 0.95);
+            }
+            canvas.add(group); canvas.centerObject(group); canvas.setActiveObject(group); canvas.requestRenderAll();
         }
+
+        // --- RECOVERY FUNCTION FOR MATH ---
+        function reviveMathObjects() {
+            const objects = canvas.getObjects();
+            objects.forEach(async (obj) => {
+                // If it is a math object, we regenerate it to fix missing SVG Defs
+                if (obj.customType === 'math' && obj.customData && obj.customData.latex) {
+                    try {
+                        const svg = await MathJax.tex2svgPromise(obj.customData.latex);
+                        const svgStr = svg.querySelector('svg').outerHTML;
+                        
+                        fabric.loadSVGFromString(svgStr, (newObjs, options) => {
+                            const newGroup = fabric.util.groupSVGElements(newObjs, options);
+                            newGroup.set({
+                                left: obj.left,
+                                top: obj.top,
+                                scaleX: obj.scaleX,
+                                scaleY: obj.scaleY,
+                                angle: obj.angle,
+                                originX: obj.originX,
+                                originY: obj.originY
+                            });
+                            newGroup.customType = 'math';
+                            newGroup.customData = obj.customData;
+                            
+                            canvas.remove(obj);
+                            canvas.add(newGroup);
+                            canvas.requestRenderAll();
+                        });
+                    } catch(e) { console.error("Error reviving math", e); }
+                }
+            });
+        }
+
+        // --- Standard Tools ---
         function addRect() { const rect = new fabric.Rect({ left: 100, top: 100, fill: '#4f46e5', width: 100, height: 100 }); canvas.add(rect); canvas.setActiveObject(rect); }
         function addCircle() { const circle = new fabric.Circle({ left: 200, top: 200, fill: '#ec4899', radius: 50 }); canvas.add(circle); canvas.setActiveObject(circle); }
         function addTriangle() { const triangle = new fabric.Triangle({ left: 300, top: 150, fill: '#f59e0b', width: 100, height: 100 }); canvas.add(triangle); canvas.setActiveObject(triangle); }
-        function addText() { const text = new fabric.Textbox('Double click to edit', { left: 100, top: 100, width: 300, fontFamily: document.getElementById('fontSelect').value, fill: document.getElementById('textColorPicker').value, fontSize: 30, textAlign: currentTextAlign }); canvas.add(text); canvas.centerObject(text); canvas.setActiveObject(text); }
-        function setGridBg() { const svg = `<svg width="40" height="40" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e5e7eb" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(#grid)"/></svg>`; setBgFromSvg(svg); }
-        function setDotsBg() { const svg = `<svg width="20" height="20" xmlns="http://www.w3.org/2000/svg"><circle cx="2" cy="2" r="1" fill="#cbd5e1"/></svg>`; setBgFromSvg(svg); }
-        function setBlackboardBg() { canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas)); canvas.setBackgroundColor('#2d3e50', canvas.renderAll.bind(canvas)); }
-        function setRuledBg() { const svg = `<svg width="40" height="25" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="25" fill="white"/><line x1="0" y1="24" x2="40" y2="24" stroke="#94a3b8" stroke-width="1"/></svg>`; setBgFromSvg(svg); }
+        function addText() { const text = new fabric.IText('Text', { left: 100, top: 100, fontFamily: 'Arial', fill: '#333333', fontSize: 30 }); canvas.add(text); canvas.centerObject(text); canvas.setActiveObject(text); }
         function setVintageBg() { canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas)); const pattern = new fabric.Gradient({ type: 'radial', coords: { r1: 0, r2: BASE_WIDTH, x1: BASE_WIDTH/2, y1: BASE_HEIGHT/2, x2: BASE_WIDTH/2, y2: BASE_HEIGHT/2 }, colorStops: [{ offset: 0, color: '#fdf5e6' }, { offset: 1, color: '#faebd7' }] }); canvas.setBackgroundColor(pattern, canvas.renderAll.bind(canvas)); }
-        function setBgFromSvg(svgString) { canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas)); const img = new Image(); img.src = 'data:image/svg+xml;base64,' + btoa(svgString); img.onload = function() { const pattern = new fabric.Pattern({ source: img, repeat: 'repeat' }); canvas.setBackgroundColor(pattern, canvas.renderAll.bind(canvas)); } }
+        function setRuledBg() { canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas)); const svg = `<svg width="40" height="25" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="25" fill="white"/><line x1="0" y1="24" x2="40" y2="24" stroke="#94a3b8" stroke-width="1"/></svg>`; const img = new Image(); img.src = 'data:image/svg+xml;base64,' + btoa(svg); img.onload = function() { const pattern = new fabric.Pattern({ source: img, repeat: 'repeat' }); canvas.setBackgroundColor(pattern, canvas.renderAll.bind(canvas)); } }
+        
+        async function toggleRecording() {
+            const btn = document.getElementById('btnRec'); const toggle = document.getElementById('presentToggle');
+            if (!isRecording) {
+                try {
+                    const canvasStream = document.querySelector('canvas').captureStream(30);
+                    let audioStream; try { audioStream = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (e) { alert("Mic unavailable. Recording video only."); }
+                    const tracks = [...canvasStream.getVideoTracks(), ...(audioStream ? audioStream.getAudioTracks() : [])];
+                    const combinedStream = new MediaStream(tracks);
+                    let options = { mimeType: 'video/webm;codecs=vp9' }; if (MediaRecorder.isTypeSupported('video/mp4')) options = { mimeType: 'video/mp4' };
+                    mediaRecorder = new MediaRecorder(combinedStream, options);
+                    recordedChunks = [];
+                    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+                    mediaRecorder.onstop = saveRecording;
+                    mediaRecorder.start();
+                    isRecording = true;
+                    btn.classList.add('recording'); btn.innerText = "⬛"; toggle.classList.add('recording');
+                    recordingLoop();
+                    if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e=>{});
+                } catch (err) { alert("Recording failed: " + err.message); }
+            } else {
+                mediaRecorder.stop(); isRecording = false;
+                btn.classList.remove('recording'); btn.innerText = "🔴"; toggle.classList.remove('recording');
+                if(mediaRecorder.stream) mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+        }
+        function recordingLoop() { if (isRecording) { canvas.renderAll(); requestAnimationFrame(recordingLoop); } }
+        function saveRecording() { const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; let ext = mediaRecorder.mimeType.includes("mp4") ? "mp4" : "webm"; a.download = `presentation.${ext}`; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url); }
+
+        function togglePresentationBar() { const bar = document.getElementById('presentationBar'); const toggleBtn = document.getElementById('presentToggle'); if (bar.style.display === 'none' || bar.style.display === '') { bar.style.display = 'flex'; toggleBtn.classList.add('active'); } else { bar.style.display = 'none'; toggleBtn.classList.remove('active'); } }
+        function setPenMode(mode) { isEraserActive = false; canvas.isDrawingMode = true; canvas.discardActiveObject(); canvas.requestRenderAll(); canvas.defaultCursor = 'default'; canvas.freeDrawingBrush = new fabric.PencilBrush(canvas); const color = document.getElementById('presentPenColor').value; const size = document.querySelector('.pen-slider').value; if (mode === 'normal') { canvas.freeDrawingBrush.width = parseInt(size, 10); canvas.freeDrawingBrush.color = color; canvas.freeDrawingBrush.shadow = null; } else if (mode === 'cursive') { canvas.freeDrawingBrush.width = parseInt(size, 10); canvas.freeDrawingBrush.color = color; canvas.freeDrawingBrush.shadow = new fabric.Shadow({ blur: 3, offsetX: 3, offsetY: 3, color: 'rgba(0,0,0,0.2)' }); } updatePenUI(mode); }
+        function setEraserMode() { canvas.isDrawingMode = false; isEraserActive = true; canvas.defaultCursor = 'crosshair'; canvas.forEachObject(function(o){ if(o.type === 'path') o.selectable = false; }); updatePenUI('eraser'); }
+        canvas.on('mouse:move', function(e) { if(isEraserActive && e.target && e.target.type === 'path') { canvas.remove(e.target); } });
+        function updatePenUI(mode) { ['btnNormal', 'btnCursive', 'btnEraser'].forEach(id => document.getElementById(id).classList.remove('active')); if(mode === 'normal') document.getElementById('btnNormal').classList.add('active'); if(mode === 'cursive') document.getElementById('btnCursive').classList.add('active'); if(mode === 'eraser') document.getElementById('btnEraser').classList.add('active'); }
+        function updatePenSize(val) { if(canvas.freeDrawingBrush) canvas.freeDrawingBrush.width = parseInt(val, 10); }
+        function changePenColor(hex) { if (canvas.freeDrawingBrush) canvas.freeDrawingBrush.color = hex; }
+        canvas.on('path:created', function(e) { if(isPresentationMode) { e.path.isInk = true; inkHistory.push(e.path); inkRedoStack = []; } });
+        function undoInk() { if(inkHistory.length > 0) { const lastPath = inkHistory.pop(); inkRedoStack.push(lastPath); canvas.remove(lastPath); canvas.renderAll(); } }
+        function redoInk() { if(inkRedoStack.length > 0) { const path = inkRedoStack.pop(); inkHistory.push(path); canvas.add(path); canvas.renderAll(); } }
+        
+        function startPresentation() { 
+            saveCurrentState(); 
+            isPresentationMode = true; 
+            document.body.classList.add('presentation-mode'); 
+            inkHistory = []; inkRedoStack = []; 
+            canvas.selection = false; 
+            canvas.forEachObject(o => o.selectable = false); 
+            if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(e => {}); 
+            document.getElementById('presentationBar').style.display = 'flex'; 
+            document.getElementById('presentToggle').classList.add('active'); 
+            resizeCanvas(); 
+        }
+        
+        function endPresentation() { 
+            if(isRecording) toggleRecording(); 
+            canvas.isDrawingMode = false; 
+            isPresentationMode = false; 
+            isEraserActive = false; 
+            document.body.classList.remove('presentation-mode'); 
+            canvas.selection = true; 
+            canvas.forEachObject(o => o.selectable = true); 
+            canvas.defaultCursor = 'default'; 
+            if (document.fullscreenElement) document.exitFullscreen(); 
+            document.getElementById('presentationBar').style.display = 'none'; 
+            document.getElementById('presentToggle').classList.remove('active'); 
+            resizeCanvas(); 
+        }
+
+        let slides = []; let currentSlideIndex = 0;
+        
+        function saveProject() { 
+            saveCurrentState(); 
+            const dataStr = JSON.stringify(slides); 
+            const blob = new Blob([dataStr], {type: "application/json"}); 
+            const url = URL.createObjectURL(blob); 
+            const a = document.createElement('a'); a.href = url; a.download = "presentation.json"; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); 
+        }
+        
+        function loadProject(input) { 
+            const file = input.files[0]; if(!file) return; 
+            const reader = new FileReader(); 
+            reader.onload = function(e) { 
+                try { 
+                    const loadedSlides = JSON.parse(e.target.result); 
+                    if(Array.isArray(loadedSlides)) { 
+                        slides = loadedSlides; currentSlideIndex = 0; loadSlide(0); setTimeout(() => alert("Loaded!"), 200); 
+                    } else { alert("Invalid file."); } 
+                } catch(err) { alert("Error reading file."); } 
+            }; reader.readAsText(file); input.value = ''; 
+        }
+
+        // --- FIXED SAVE/LOAD LOGIC ---
+        function saveCurrentState() { 
+            // Important: We MUST save custom properties or Math formulas will be lost
+            slides[currentSlideIndex] = JSON.stringify(canvas.toJSON(['customType', 'customData', 'isInk'])); 
+        }
+
+        function loadSlide(index) { 
+            currentSlideIndex = index; 
+            const json = slides[index]; 
+            canvas.setZoom(1); 
+            canvas.setDimensions({ width: BASE_WIDTH, height: BASE_HEIGHT }); 
+            canvas.clear(); 
+            
+            if (json) { 
+                canvas.loadFromJSON(json, function() { 
+                    resizeCanvas(); 
+                    if(isPresentationMode) { 
+                        canvas.selection = false; 
+                        canvas.forEachObject(o => o.selectable = false); 
+                    } 
+                    // Detect and fix broken math objects
+                    reviveMathObjects();
+                    canvas.renderAll(); 
+                }); 
+            } else { 
+                canvas.setBackgroundColor('#ffffff'); 
+                resizeCanvas(); 
+            } 
+            document.getElementById('slideCounter').innerText = `${currentSlideIndex + 1} / ${slides.length}`; 
+            inkHistory = []; inkRedoStack = []; 
+        }
+        
+        function addNewSlide() { saveCurrentState(); slides.push(null); loadSlide(slides.length - 1); }
+        function nextSlide() { if (currentSlideIndex < slides.length - 1) { saveCurrentState(); loadSlide(currentSlideIndex + 1); } }
+        function prevSlide() { if (currentSlideIndex > 0) { saveCurrentState(); loadSlide(currentSlideIndex - 1); } }
+        function resizeCanvas() { const canvasArea = document.getElementById('canvasArea'); let availableWidth = isPresentationMode ? window.innerWidth : canvasArea.clientWidth - 20; let availableHeight = isPresentationMode ? window.innerHeight : canvasArea.clientHeight - 20; const scale = Math.min(availableWidth / BASE_WIDTH, availableHeight / BASE_HEIGHT); canvas.setDimensions({ width: BASE_WIDTH * scale, height: BASE_HEIGHT * scale }); canvas.setZoom(scale); canvas.renderAll(); }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); setTimeout(resizeCanvas, 350); }
+        function changeFont(font) { const o = canvas.getActiveObject(); if(o && o.type.includes('text')) { o.set("fontFamily", font); canvas.renderAll(); }}
+        function changeObjColor(hex) { const o = canvas.getActiveObject(); if(o) { o.set('fill', hex); canvas.renderAll(); }}
+        function deleteObject() { const o = canvas.getActiveObject(); if(o) canvas.remove(o); }
         function setSolidBg(c) { canvas.setBackgroundImage(null,()=>canvas.renderAll()); canvas.setBackgroundColor(c,()=>canvas.renderAll()); }
         function setBgImage(i) { const f=i.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ fabric.Image.fromURL(e.target.result, img=>{ const s = Math.max(BASE_WIDTH/img.width, BASE_HEIGHT/img.height); canvas.setBackgroundImage(img, ()=>canvas.renderAll(), { scaleX:s, scaleY:s, originX:'left', originY:'top'}); })}; r.readAsDataURL(f); i.value=''; }
-        
-        function updateEditButton() {
-            const btn = document.getElementById('btnEditItem'); const fontSel = document.getElementById('fontSelect'); const colSel = document.getElementById('textColorPicker'); const obj = canvas.getActiveObject();
-            if (obj && (obj.customType || (obj.group && obj.group.customType))) { btn.disabled = false; btn.style.opacity = '1'; btn.innerHTML = `✏️ <b>Edit ${obj.customType ? obj.customType.toUpperCase() : 'Item'}</b>`; } else { btn.disabled = true; btn.style.opacity = '0.5'; btn.innerHTML = `✏️ <b>Edit Selected</b>`; }
-            if (obj && (obj.type === 'i-text' || obj.type === 'textbox')) { fontSel.value = obj.fontFamily || 'Arial'; colSel.value = obj.fill; }
-        }
-        canvas.on('selection:created', updateEditButton); canvas.on('selection:updated', updateEditButton); canvas.on('selection:cleared', updateEditButton); canvas.on('mouse:dblclick', function(e) { editSelectedItem(); });
-        function editSelectedItem() { let target = canvas.getActiveObject(); if(!target) return; if(!target.customType && target.group) target = target.group; if(target && target.customType) openConfig(target.customType, target); }
+        function addObjImage(i) { const f=i.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ fabric.Image.fromURL(e.target.result, img=>{ img.scaleToWidth(200); canvas.add(img); canvas.centerObject(img); })}; r.readAsDataURL(f); i.value=''; }
 
-        function openConfig(type, existingGroup = null) {
-            currentConfigType = type; activeEditGroup = existingGroup; document.getElementById('configModal').style.display = 'flex'; const body = document.getElementById('modalBody'); body.innerHTML = ''; let data = existingGroup ? existingGroup.customData : null;
-            if (type === 'mcq') { body.innerHTML = `<label>Question:</label><textarea id="inpQ" rows="3">${data?data.q:'Question?'}</textarea><label>Options:</label><textarea id="inpA" rows="2">${data?data.o[0]:'Option A'}</textarea><textarea id="inpB" rows="2">${data?data.o[1]:'Option B'}</textarea><textarea id="inpC" rows="2">${data?data.o[2]:'Option C'}</textarea><textarea id="inpD" rows="2">${data?data.o[3]:'Option D'}</textarea>`; } 
-            else if (type === 'matching') { let html = ''; const p = data?data.pairs:[['A','1'],['B','2'],['C','3'],['D','4']]; for(let i=0;i<4;i++) html+=`<div style="display:flex;gap:5px;"><textarea id="mL${i}" rows="1">${p[i][0]}</textarea><textarea id="mR${i}" rows="1">${p[i][1]}</textarea></div>`; body.innerHTML = html; } 
-            else if (type === 'table') { if(existingGroup){ let h=`<div class="table-grid-editor" style="grid-template-columns:repeat(${data.cols},1fr);">`; for(let i=0;i<data.rows*data.cols;i++) h+=`<textarea class="tbl-cell-inp" rows="1">${data.cells[i]||''}</textarea>`; h+='</div>'; body.innerHTML=h+`<input type="hidden" id="inpRows" value="${data.rows}"><input type="hidden" id="inpCols" value="${data.cols}">`; } else { body.innerHTML=`<label>Rows:</label><input type="number" id="inpRows" value="3"><label>Cols:</label><input type="number" id="inpCols" value="3">`; } }
-            else if (type === 'math') { body.innerHTML = `<label>LaTeX:</label><textarea id="inpMath" rows="3">${data?data.latex:'x^2'}</textarea>`; }
-        }
-        function closeModal() { document.getElementById('configModal').style.display = 'none'; currentConfigType = null; activeEditGroup = null; }
-        async function saveConfig() {
-            let newData = {};
-            if (currentConfigType === 'mcq') { newData.q = document.getElementById('inpQ').value; newData.o = ['inpA','inpB','inpC','inpD'].map(id=>document.getElementById(id).value); await drawMCQ(newData); } 
-            else if (currentConfigType === 'matching') { newData.pairs=[]; for(let i=0;i<4;i++) newData.pairs.push([document.getElementById('mL'+i).value, document.getElementById('mR'+i).value]); await drawMatching(newData); } 
-            else if (currentConfigType === 'table') { newData.rows=parseInt(document.getElementById('inpRows').value); newData.cols=parseInt(document.getElementById('inpCols').value); const inps=document.querySelectorAll('.tbl-cell-inp'); if(inps.length) newData.cells=Array.from(inps).map(i=>i.value); else newData.cells=new Array(newData.rows*newData.cols).fill(" "); await drawTable(newData); }
-            else if (currentConfigType === 'math') { await drawMath(document.getElementById('inpMath').value); }
-            closeModal();
-        }
-
-        function deleteObject() { const o = canvas.getActiveObject(); if(o) canvas.remove(o); }
-
-        // --- RECORDING WITH MP4 PRIORITY ---
-        async function toggleRecording() { 
-            const btn = document.getElementById('btnRec'); const toggle = document.getElementById('presentToggle'); 
-            if (!isRecording) { 
-                try { 
-                    const stream = document.querySelector('canvas').captureStream(30); 
-                    const audio = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(()=>null); 
-                    const tracks = [...stream.getVideoTracks(), ...(audio?audio.getAudioTracks():[])]; 
-                    
-                    const mimeTypes = ["video/mp4", "video/webm;codecs=h264", "video/webm;codecs=vp9", "video/webm"];
-                    let selectedType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type));
-                    if (!selectedType) { alert("No supported video mime type found."); return; }
-
-                    let options = { mimeType: selectedType };
-                    mediaRecorder = new MediaRecorder(new MediaStream(tracks), options); 
-                    recordedChunks = []; 
-                    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); }; 
-                    mediaRecorder.onstop = saveRecording; 
-                    mediaRecorder.start(); 
-                    isRecording = true; 
-                    btn.classList.add('recording'); toggle.classList.add('recording'); btn.innerText="⬛"; 
-                    recordingLoop(); 
-                } catch (e) { alert("Error: "+e.message); } 
-            } else { 
-                mediaRecorder.stop(); isRecording = false; 
-                btn.classList.remove('recording'); toggle.classList.remove('recording'); btn.innerText="🔴"; 
-                if(mediaRecorder.stream) mediaRecorder.stream.getTracks().forEach(track => track.stop());
-            } 
-        }
-
-        function recordingLoop() { if (isRecording) { canvas.renderAll(); requestAnimationFrame(recordingLoop); } }
-        
-        function saveRecording() { 
-            const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType }); 
-            const url = URL.createObjectURL(blob); 
-            const a = document.createElement('a'); 
-            a.style.display = 'none'; 
-            a.href = url; 
-            let ext = mediaRecorder.mimeType.includes("mp4") ? "mp4" : "webm";
-            a.download = `presentation.${ext}`; 
-            document.body.appendChild(a); 
-            a.click(); 
-            window.URL.revokeObjectURL(url); 
-        }
-        
-        function togglePresentationBar() { const b=document.getElementById('presentationBar'); const t=document.getElementById('presentToggle'); if(b.style.display==='flex'){b.style.display='none';t.classList.remove('active');}else{b.style.display='flex';t.classList.add('active');}}
-        function setPenMode(m){ isEraserActive=false; canvas.isDrawingMode=true; canvas.freeDrawingBrush=new fabric.PencilBrush(canvas); canvas.freeDrawingBrush.width=parseInt(document.querySelector('.pen-slider').value); canvas.freeDrawingBrush.color=document.getElementById('presentPenColor').value; if(m==='cursive') canvas.freeDrawingBrush.shadow=new fabric.Shadow({blur:3,offsetX:3,offsetY:3,color:'rgba(0,0,0,0.2)'}); updatePenUI(m); }
-        function setEraserMode(){ isEraserActive=true; canvas.isDrawingMode=false; canvas.defaultCursor='crosshair'; updatePenUI('eraser'); }
-        function updatePenUI(mode) { ['btnNormal', 'btnCursive', 'btnEraser'].forEach(id => document.getElementById(id).classList.remove('active')); if(mode === 'normal') document.getElementById('btnNormal').classList.add('active'); if(mode === 'cursive') document.getElementById('btnCursive').classList.add('active'); if(mode === 'eraser') document.getElementById('btnEraser').classList.add('active'); }
-        canvas.on('mouse:move', e=>{if(isEraserActive&&e.target&&e.target.type==='path')canvas.remove(e.target)});
-        function updatePenSize(v){if(canvas.freeDrawingBrush)canvas.freeDrawingBrush.width=parseInt(v);}
-        function changePenColor(c){if(canvas.freeDrawingBrush)canvas.freeDrawingBrush.color=c;}
-        canvas.on('path:created', e=>{if(isPresentationMode){e.path.isInk=true;inkHistory.push(e.path);inkRedoStack=[];}});
-        function undoInk(){if(inkHistory.length){const p=inkHistory.pop();inkRedoStack.push(p);canvas.remove(p);}}
-        function redoInk(){if(inkRedoStack.length){const p=inkRedoStack.pop();inkHistory.push(p);canvas.add(p);}}
-        
-        let slides=[]; let currentSlideIndex=0;
-        function saveProject(){ slides[currentSlideIndex]=JSON.stringify(canvas.toJSON()); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(slides)],{type:'application/json'})); a.download='project.json'; a.click(); }
-        function loadProject(i){ const r=new FileReader(); r.onload=e=>{ slides=JSON.parse(e.target.result); currentSlideIndex=0; loadSlide(0); }; r.readAsText(i.files[0]); }
-        function loadSlide(i){ canvas.clear(); canvas.loadFromJSON(slides[i], ()=>canvas.renderAll()); document.getElementById('slideCounter').innerText=`${i+1}/${slides.length}`; }
-        function addNewSlide(){ slides[currentSlideIndex]=JSON.stringify(canvas.toJSON()); slides.push(JSON.stringify({})); currentSlideIndex++; loadSlide(currentSlideIndex); }
-        function nextSlide(){ if(currentSlideIndex<slides.length-1){ slides[currentSlideIndex]=JSON.stringify(canvas.toJSON()); currentSlideIndex++; loadSlide(currentSlideIndex); }}
-        function prevSlide(){ if(currentSlideIndex>0){ slides[currentSlideIndex]=JSON.stringify(canvas.toJSON()); currentSlideIndex--; loadSlide(currentSlideIndex); }}
-        
-        // --- START PRESENTATION FIX ---
-        function startPresentation() {
-            slides[currentSlideIndex] = JSON.stringify(canvas.toJSON());
-            isPresentationMode = true;
-            document.body.classList.add('presentation-mode');
-            document.getElementById('presentationBar').style.display = 'flex';
-            document.getElementById('presentToggle').classList.add('active');
-            
-            // Force activate pen mode AND update UI
-            setPenMode('normal');
-
-            const el = document.documentElement;
-            const requestMethod = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
-            if (requestMethod) {
-                requestMethod.call(el).then(() => {
-                    setTimeout(resizeCanvas, 200);
-                }).catch(err => console.log("Fullscreen Error:", err));
-            } else {
-                resizeCanvas();
-            }
-        }
-
-        function endPresentation() { 
-            if(isRecording) toggleRecording();
-            isPresentationMode = false; 
-            canvas.isDrawingMode = false;
-            isEraserActive = false;
-            canvas.defaultCursor = 'default';
-            canvas.selection = true;
-            canvas.forEachObject(o => o.selectable = true);
-
-            document.body.classList.remove('presentation-mode'); 
-            document.getElementById('presentationBar').style.display = 'none'; 
-            document.getElementById('presentToggle').classList.remove('active');
-            
-            if (document.fullscreenElement) document.exitFullscreen();
-            setTimeout(resizeCanvas, 100);
-        }
-
-        function resizeCanvas() { 
-            const canvasArea = document.getElementById('canvasArea');
-            let availW, availH;
-
-            if (isPresentationMode) {
-                availW = window.innerWidth;
-                availH = window.innerHeight;
-            } else {
-                availW = canvasArea.clientWidth - 20; 
-                availH = canvasArea.clientHeight - 20;
-            }
-
-            const scale = Math.min(availW / BASE_WIDTH, availH / BASE_HEIGHT);
-            canvas.setDimensions({ width: BASE_WIDTH * scale, height: BASE_HEIGHT * scale });
-            canvas.setZoom(scale);
-            canvas.renderAll();
-        }
-
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); setTimeout(resizeCanvas,350); }
-        window.addEventListener('resize', resizeCanvas); 
-        document.addEventListener('fullscreenchange', resizeCanvas);
-        
-        if(window.innerWidth<768)document.getElementById('sidebar').classList.add('hidden'); slides[0]=JSON.stringify(canvas.toJSON()); setTimeout(resizeCanvas,100);
+        window.addEventListener('resize', resizeCanvas);
+        if (window.innerWidth < 768) document.getElementById('sidebar').classList.add('hidden');
+        slides[0] = JSON.stringify(canvas.toJSON());
+        setTimeout(resizeCanvas, 100);
     </script>
+    
+
+
+
 </body>
 </html>
