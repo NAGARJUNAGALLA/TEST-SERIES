@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>SlideGen - Animation & Duplicate</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Dhurjati&family=Gidugu&family=NTR&family=Ramabhadra&family=Montserrat:wght@400;700&family=Open+Sans:wght@400;600&family=Oswald&family=Pacifico&family=Roboto:wght@400;700&family=Lobster&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --active-color: #059669; /* Emerald Green */
+            --sidebar-width: 280px;
+            --bottom-bar-height: 100px; 
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f3f4f6;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden; 
+            display: flex;
+        }
+
+        /* --- Toggle Button --- */
+        .toggle-btn {
+            position: absolute; top: 15px; left: 15px;
+            background: white; border: 1px solid #ddd;
+            width: 36px; height: 36px; border-radius: 8px;
+            cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 1000; display: flex; align-items: center; justify-content: center;
+            color: #333; font-size: 1.1rem;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: white;
+            border-right: 1px solid #ddd;
+            display: flex; flex-direction: column;
+            padding: 20px; padding-top: 60px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+            z-index: 900; transition: margin-left 0.3s ease;
+            height: 100%;
+            overflow-y: auto; 
+            flex-shrink: 0; 
+        }
+
+        .sidebar.hidden { margin-left: calc(var(--sidebar-width) * -1); }
+        
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; height: 100%; left: 0; top: 0; transform: translateX(0); width: 85%; max-width: 300px; }
+            .sidebar.hidden { transform: translateX(-100%); margin-left: 0; }
+        }
+
+        .brand { position: absolute; top: 20px; left: 60px; font-size: 1.1rem; font-weight: bold; color: var(--primary); }
+        .tool-group { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .tool-group h3 { font-size: 0.75rem; text-transform: uppercase; color: #888; margin-bottom: 8px; }
+
+        .btn {
+            display: flex; align-items: center; width: 100%; padding: 10px;
+            margin-bottom: 6px; background: white; border: 1px solid #e5e7eb;
+            border-radius: 6px; cursor: pointer; font-size: 0.9rem; color: #374151;
+            justify-content: center; user-select: none;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn.primary { background-color: var(--primary); color: white; border: none; }
+        .btn.danger { color: #ef4444; border-color: #fee2e2; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; background: #f3f4f6; color: #aaa; }
+
+        .style-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.85rem; color: #555; }
+        select { width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; background: #f8fafc; margin-bottom: 8px; font-size: 0.9rem; }
+        input[type="color"] { border: none; width: 30px; height: 30px; cursor: pointer; background: none; padding: 0; }
+        input[type="file"] { display: none; }
+
+        /* --- Workspace --- */
+        .workspace {
+            flex-grow: 1; display: grid; grid-template-rows: 1fr var(--bottom-bar-height);
+            background-color: #e5e7eb; position: relative; height: 100%; overflow: hidden;
+        }
+        .canvas-area {
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; padding: 20px; width: 100%; height: 100%;
+        }
+        .canvas-wrapper { box-shadow: 0 10px 20px rgba(0,0,0,0.15); background: white; }
+
+        /* --- Bottom Bar --- */
+        .bottom-bar {
+            background: white; border-top: 1px solid #ddd;
+            display: flex; align-items: center; justify-content: center; 
+            gap: 10px; z-index: 50; width: 100%; height: var(--bottom-bar-height);
+            padding-bottom: calc(20px + env(safe-area-inset-bottom)); padding-top: 10px;
+        }
+        .slide-counter { font-weight: 600; min-width: 50px; text-align: center; font-size: 0.9rem; }
+        .bottom-bar .btn { width: auto; padding: 10px 16px; margin: 0; font-size: 0.9rem; }
+
+        /* --- Vertical Toolbar (Presentation) --- */
+        .presentation-bar {
+            display: none; position: fixed; top: 50%; right: 15px; transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.9); padding: 15px 8px; border-radius: 30px;
+            z-index: 99999; flex-direction: column; align-items: center; gap: 8px;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.3); max-height: 85vh; overflow-y: auto; overflow-x: hidden;
+            backdrop-filter: blur(5px); scrollbar-width: none; 
+        }
+        .presentation-bar::-webkit-scrollbar { display: none; }
+        .presentation-bar .btn {
+            background: #f3f4f6; color: #333; border: 1px solid #ddd; margin: 0; padding: 0;
+            width: 34px; height: 34px; font-size: 0.85rem; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        
+        /* Active state */
+        .presentation-bar .btn.active { 
+            background-color: var(--active-color) !important; 
+            color: white !important; 
+            border-color: var(--active-color) !important;
+        }
+        
+        .presentation-bar .btn.danger { background: #fee2e2; color: #ef4444; border-color: #fee2e2; }
+        .btn.recording { background-color: #ef4444; color: white; border-color: #ef4444; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        .presentation-bar input[type="color"] { width: 30px; height: 30px; border-radius: 50%; overflow: hidden; padding: 0; border: none; flex-shrink: 0; }
+        .pen-slider { width: 40px; height: 6px; flex-shrink: 0; margin: 5px 0; }
+        .divider { width: 80%; height: 1px; background: #ccc; margin: 4px 0; flex-shrink: 0; }
+
+        /* --- Circular Toggle --- */
+        .present-toggle {
+            display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 40px; height: 40px; background: rgba(255,255,255,0.3); border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.6); color: white; font-size: 1.2rem;
+            cursor: pointer; z-index: 100000; backdrop-filter: blur(4px);
+            align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: all 0.2s;
+        }
+        
+        .present-toggle.active { 
+            background: var(--active-color) !important; 
+            border-color: var(--active-color) !important; 
+            color: white !important; opacity: 1; 
+        }
+        
+        .present-toggle.recording { background-color: #ef4444 !important; border-color: #ef4444 !important; opacity: 1; animation: pulse 1.5s infinite; }
+
+        /* --- MODAL --- */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 100000; align-items: center; justify-content: center;
+        }
+        .modal-box {
+            background: white; width: 90%; max-width: 500px; padding: 20px;
+            border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            max-height: 90vh; display: flex; flex-direction: column;
+        }
+        .modal-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 15px; color: var(--primary); }
+        .modal-body { overflow-y: auto; padding-right: 5px; flex: 1; }
+        .modal-body input, .modal-body textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: inherit; font-size: 0.9rem; resize: vertical; }
+        .modal-body label { font-size: 0.85rem; color: #555; display: block; margin-bottom: 3px; font-weight: 600; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
+        .table-grid-editor { display: grid; gap: 5px; margin-bottom: 10px; }
+        .table-grid-editor textarea { margin: 0; height: 50px; min-height: 40px; }
+
+        body.presentation-mode { background-color: #000; }
+        body.presentation-mode .sidebar, body.presentation-mode .bottom-bar, body.presentation-mode .toggle-btn { display: none !important; }
+        body.presentation-mode .workspace { background-color: #000; grid-template-rows: 1fr; }
+        body.presentation-mode .canvas-area { padding: 0; width: 100vw; height: 100vh; }
+        body.presentation-mode .present-toggle { display: flex; }
+
+    </style>
+</head>
+<body>
+
+    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+
+    <div class="sidebar" id="sidebar">
+        <div class="brand">SlideGen</div>
+
+        <div class="tool-group">
+            <h3>Education</h3>
+            <button class="btn" onclick="openConfig('mcq')">❓ MCQ</button>
+            <button class="btn" onclick="openConfig('table')">▦ Table</button>
+            <button class="btn" onclick="openConfig('matching')">⇄ Matching</button>
+            <button class="btn" onclick="openConfig('math')">𝝅 Formula</button>
+        </div>
+
+        <div class="tool-group">
+            <h3>Text & Fonts</h3>
+            <button class="btn" onclick="addText()">📝 Add Text</button>
+            
+            <div class="style-row">
+                <select id="fontSelect" onchange="changeFont(this.value)">
+                    <option value="Arial">Arial</option>
+                    <optgroup label="Telugu Fonts">
+                        <option value="NTR">NTR</option>
+                        <option value="Ramabhadra">Ramabhadra</option>
+                        <option value="Gidugu">Gidugu</option>
+                        <option value="Dhurjati">Dhurjati</option>
+                    </optgroup>
+                    <optgroup label="English Styles">
+                        <option value="Montserrat">Montserrat</option>
+                        <option value="Roboto">Roboto</option>
+                        <option value="Oswald">Oswald</option>
+                        <option value="Lobster">Lobster</option>
+                        <option value="Pacifico">Pacifico</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="style-row" style="justify-content: space-between; flex-wrap:wrap;">
+                <input type="color" id="textColorPicker" value="#333333" onchange="changeObjColor(this.value)" title="Text Color" style="width:30px;">
+                <button class="btn" style="width:auto; margin:0;" onclick="toggleBold()" title="Bold">B</button>
+                <button class="btn" style="width:auto; margin:0;" onclick="toggleItalic()" title="Italic">I</button>
+                
+                <button class="btn" style="width:auto; margin:0; padding:6px;" onclick="setTextAlign('left')" title="Align Left">⬅</button>
+                <button class="btn" style="width:auto; margin:0; padding:6px;" onclick="setTextAlign('center')" title="Align Center">⬇</button>
+                <button class="btn" style="width:auto; margin:0; padding:6px;" onclick="setTextAlign('right')" title="Align Right">➡</button>
+            </div>
+        </div>
+
+        <div class="tool-group">
+            <h3>Animations</h3>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
+                <button class="btn" onclick="setAnimation('fade')">✨ Fade</button>
+                <button class="btn" onclick="setAnimation('slide')">⬆ Slide</button>
+                <button class="btn" onclick="setAnimation('zoom')">🔍 Zoom</button>
+                <button class="btn danger" onclick="setAnimation(null)" style="font-size:0.7rem;">None</button>
+            </div>
+        </div>
+
+        <div class="tool-group">
+            <h3>Backgrounds</h3>
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <button class="btn" onclick="setGridBg()" style="font-size:0.8rem;">▦ Grid</button>
+                <button class="btn" onclick="setRuledBg()" style="font-size:0.8rem;">📝 Rule</button>
+            </div>
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <button class="btn" onclick="setBlackboardBg()" style="background:#2d3e50; color:white; font-size:0.8rem;">⬛ Board</button>
+                <button class="btn" onclick="setVintageBg()" style="background:#fdf5e6; color:#5d4037; font-size:0.8rem;">📜 Old</button>
+            </div>
+            <div class="style-row">
+                <input type="color" onchange="setSolidBg(this.value)" title="Solid Color">
+                <button class="btn" style="width:auto; margin:0; flex:1;" onclick="document.getElementById('bgImgInput').click()">🌄 BG Image</button>
+            </div>
+            <input type="file" id="bgImgInput" accept="image/*" onchange="setBgImage(this)">
+        </div>
+
+        <div class="tool-group">
+            <h3>Project</h3>
+            <button class="btn primary" id="btnEditItem" onclick="editSelectedItem()" disabled>✏️ <b>Edit Selected</b></button>
+            <button class="btn" onclick="startPresentation()">▶️ Present</button>
+            <button class="btn" onclick="saveProject()">💾 Save</button>
+            <button class="btn" onclick="document.getElementById('loadJsonInput').click()">📂 Load</button>
+            <input type="file" id="loadJsonInput" onchange="loadProject(this)">
+            <button class="btn danger" onclick="deleteObject()">🗑️ Delete Item</button>
+        </div>
+    </div>
+
+    <div class="workspace" id="workspaceContainer">
+        <div class="canvas-area" id="canvasArea">
+            <div class="canvas-wrapper">
+                <canvas id="slideCanvas"></canvas>
+            </div>
+        </div>
+        <div class="bottom-bar">
+            <button class="btn" onclick="prevSlide()">❮</button>
+            <span class="slide-counter" id="slideCounter">1 / 1</span>
+            <button class="btn" onclick="nextSlide()">❯</button>
+            <button class="btn primary" onclick="addNewSlide()">+ Slide</button>
+            <button class="btn" onclick="duplicateSlide()" style="background:#e0f2fe; color:#0369a1; border-color:#bae6fd;">📋 Duplicate</button>
+        </div>
+    </div>
+
+    <button class="present-toggle" id="presentToggle" onclick="togglePresentationBar()" title="Show/Hide Toolbar">🛠</button>
+
+    <div class="presentation-bar" id="presentationBar">
+        <button class="btn" onclick="prevSlide()">▲</button>
+        <button class="btn" onclick="nextSlide()">▼</button>
+        <div class="divider"></div>
+        <button class="btn" id="btnRec" onclick="toggleRecording()" title="Record">🔴</button>
+        <div class="divider"></div>
+        <button class="btn" id="btnNormal" onclick="setPenMode('normal')" title="Pen">🖊️</button>
+        <button class="btn" id="btnCursive" onclick="setPenMode('cursive')" title="Cursive" style="font-family:'Pacifico'; font-size:0.7rem;">f</button>
+        <button class="btn" id="btnEraser" onclick="setEraserMode()" title="Eraser">🧹</button>
+        <input type="range" class="pen-slider" min="1" max="30" value="3" oninput="updatePenSize(this.value)" title="Size">
+        <input type="color" id="presentPenColor" value="#ff0000" onchange="changePenColor(this.value)" title="Color">
+        <div class="divider"></div>
+        <button class="btn" onclick="undoInk()" title="Undo">↩️</button>
+        <button class="btn" onclick="redoInk()" title="Redo">↪️</button>
+        <div class="divider"></div>
+        <button class="btn" onclick="togglePresentationBar()" title="Hide">➡</button>
+        <button class="btn danger" onclick="endPresentation()" title="Exit">❌</button>
+    </div>
+
+    <div id="configModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title" id="modalTitle">Configuration</div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal()" style="width:auto;">Cancel</button>
+                <button class="btn primary" onclick="saveConfig()" style="width:auto;">Save Updates</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_WIDTH = 800;
+        const BASE_HEIGHT = 450;
+        let isPresentationMode = false;
+        let isEraserActive = false;
+        let inkHistory = [];
+        let inkRedoStack = [];
+        let mediaRecorder;
+        let recordedChunks = [];
+        let isRecording = false;
+        let currentConfigType = null;
+        let activeEditGroup = null;
+        let currentTextAlign = 'left';
+        let slides=[]; 
+        let currentSlideIndex=0;
+
+        const canvas = new fabric.Canvas('slideCanvas', {
+            width: BASE_WIDTH,
+            height: BASE_HEIGHT,
+            backgroundColor: '#ffffff',
+            selection: true
+        });
+
+        canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+        canvas.freeDrawingBrush.width = 3;
+        canvas.freeDrawingBrush.color = "#ff0000";
+
+        // --- ANIMATION SYSTEM ---
+        function setAnimation(type) {
+            const obj = canvas.getActiveObject();
+            if (!obj) { alert("Select an object first!"); return; }
+            obj.set('animationType', type);
+            // Visual feedback
+            obj.set('stroke', type ? '#4f46e5' : null);
+            obj.set('strokeWidth', type ? 2 : 0);
+            canvas.renderAll();
+        }
+
+        function runAnimations() {
+            canvas.getObjects().forEach(obj => {
+                if (obj.animationType && !obj.isInk) {
+                    const originalOpacity = obj.opacity || 1;
+                    const originalTop = obj.top;
+                    const originalScaleX = obj.scaleX;
+                    const originalScaleY = obj.scaleY;
+
+                    if (obj.animationType === 'fade') {
+                        obj.set('opacity', 0);
+                        obj.animate('opacity', originalOpacity, { duration: 1000, onChange: canvas.renderAll.bind(canvas) });
+                    } else if (obj.animationType === 'slide') {
+                        obj.set('top', originalTop + 50);
+                        obj.set('opacity', 0);
+                        obj.animate({ top: originalTop, opacity: originalOpacity }, { duration: 800, easing: fabric.util.ease.easeOutBack, onChange: canvas.renderAll.bind(canvas) });
+                    } else if (obj.animationType === 'zoom') {
+                        obj.set('scaleX', 0); obj.set('scaleY', 0);
+                        obj.animate({ scaleX: originalScaleX, scaleY: originalScaleY }, { duration: 800, easing: fabric.util.ease.easeOutElastic, onChange: canvas.renderAll.bind(canvas) });
+                    }
+                }
+            });
+        }
+
+        // --- SLIDE DUPLICATION ---
+        function duplicateSlide() {
+            slides[currentSlideIndex] = JSON.stringify(canvas.toJSON(['animationType', 'customType', 'customData']));
+            const currentPage = slides[currentSlideIndex];
+            slides.splice(currentSlideIndex + 1, 0, currentPage);
+            currentSlideIndex++;
+            loadSlide(currentSlideIndex);
+        }
+
+        // --- GLOBAL STYLING FUNCTIONS ---
+        function changeObjColor(hex) {
+            const obj = canvas.getActiveObject();
+            if(!obj) return;
+            if (obj.type === 'group') {
+                obj.getObjects().forEach(child => {
+                    if (child.type === 'text' || child.type === 'i-text' || child.type === 'textbox') child.set('fill', hex);
+                });
+                obj.addWithUpdate();
+            } else { obj.set('fill', hex); }
+            canvas.renderAll();
+        }
+
+        function setTextAlign(align) {
+            currentTextAlign = align;
+            const obj = canvas.getActiveObject();
+            if(obj && (obj.type === 'textbox' || obj.type === 'i-text')) {
+                obj.set('textAlign', align);
+                canvas.renderAll();
+            }
+        }
+
+        function changeFont(fontName) {
+            const obj = canvas.getActiveObject();
+            if (obj && (obj.type === 'i-text' || obj.type === 'textbox')) {
+                obj.set('fontFamily', fontName);
+                canvas.renderAll();
+            }
+        }
+
+        function toggleBold() {
+            const obj = canvas.getActiveObject();
+            if(obj && (obj.type === 'i-text' || obj.type === 'textbox')) {
+                obj.set('fontWeight', obj.fontWeight === 'bold' ? 'normal' : 'bold'); canvas.renderAll();
+            }
+        }
+
+        function toggleItalic() {
+            const obj = canvas.getActiveObject();
+            if(obj && (obj.type === 'i-text' || obj.type === 'textbox')) {
+                obj.set('fontStyle', obj.fontStyle === 'italic' ? 'normal' : 'italic'); canvas.renderAll();
+            }
+        }
+
+        // --- RENDER CONTENT ---
+        async function renderContent(text, fontSize, width) {
+            let font = document.getElementById('fontSelect').value;
+            let color = document.getElementById('textColorPicker').value;
+            const hasMath = text.includes('$');
+            if (hasMath) {
+                try {
+                    const svg = await MathJax.tex2svgPromise(text.replace(/\$/g, ''));
+                    const svgStr = svg.querySelector('svg').outerHTML;
+                    return new Promise((resolve) => {
+                        fabric.loadSVGFromString(svgStr, (objects, options) => {
+                            const obj = fabric.util.groupSVGElements(objects, options);
+                            obj.getObjects().forEach(o => o.set('fill', color));
+                            obj.scale((fontSize * 1.2) / obj.height);
+                            resolve(obj);
+                        });
+                    });
+                } catch(e) { return new fabric.Textbox(text, { fontSize, width, fontFamily: font, fill: color }); }
+            } else {
+                return new fabric.Textbox(text, { fontSize, width, fontFamily: font, fill: color, textAlign: currentTextAlign });
+            }
+        }
+
+        // --- COMPONENT DRAWING ---
+        async function drawMCQ(data) {
+            if (activeEditGroup) { var t=activeEditGroup.top, l=activeEditGroup.left; canvas.remove(activeEditGroup); } else { var t=50, l=50; }
+            const qObj = await renderContent(data.q, 24, 600);
+            const objects = [qObj]; let curY = qObj.height + 20;
+            for(let opt of data.o) {
+                const c = new fabric.Circle({ radius: 8, fill: 'transparent', stroke: '#333', strokeWidth: 2, top: curY + 5, left: 0 });
+                const o = await renderContent(opt, 20, 550); o.set({ top: curY, left: 30 });
+                objects.push(c, o); curY += Math.max(o.height, 30) + 10;
+            }
+            const g = new fabric.Group(objects, { top: t, left: l, customType: 'mcq', customData: data }); finishObject(g);
+        }
+
+        async function drawMatching(data) {
+            if (activeEditGroup) { var t=activeEditGroup.top, l=activeEditGroup.left; canvas.remove(activeEditGroup); } else { var t=50, l=50; }
+            const objects = []; let curY = 0;
+            for(let p of data.pairs) {
+                const lO = await renderContent(p[0], 20, 200); lO.set({ top: curY, left: 0 });
+                const rO = await renderContent(p[1], 20, 200); rO.set({ top: curY, left: 350 });
+                objects.push(lO, rO); curY += 40;
+            }
+            const g = new fabric.Group(objects, { top: t, left: l, customType: 'matching', customData: data }); finishObject(g);
+        }
+
+        async function drawTable(data) {
+            if (activeEditGroup) { var t=activeEditGroup.top, l=activeEditGroup.left; canvas.remove(activeEditGroup); } else { var t=50, l=50; }
+            const objects = []; let curY = 0; let cellIdx = 0;
+            for(let r=0; r<data.rows; r++) {
+                let maxH = 40;
+                for(let c=0; c<data.cols; c++) {
+                    const txt = data.cells[cellIdx++] || "";
+                    const cell = await renderContent(txt, 18, 140);
+                    const rect = new fabric.Rect({ width: 150, height: 50, fill: 'transparent', stroke: '#333', top: curY, left: c*150 });
+                    cell.set({ top: curY + 10, left: c*150 + 5 });
+                    objects.push(rect, cell);
+                }
+                curY += 50;
+            }
+            const g = new fabric.Group(objects, { top: t, left: l, customType: 'table', customData: data }); finishObject(g);
+        }
+
+        async function drawMath(latex) {
+            if (activeEditGroup) { var t=activeEditGroup.top, l=activeEditGroup.left; canvas.remove(activeEditGroup); } else { var t=100, l=100; }
+            const svg = await MathJax.tex2svgPromise(latex);
+            fabric.loadSVGFromString(svg.querySelector('svg').outerHTML, (objs, opts) => {
+                const m = fabric.util.groupSVGElements(objs, opts);
+                m.set({ left: l, top: t, customType: 'math', customData: { latex } });
+                m.getObjects().forEach(o => o.set('fill', document.getElementById('textColorPicker').value));
+                m.scale(40 / m.height); finishObject(m);
+            });
+        }
+
+        function finishObject(obj) { canvas.add(obj); canvas.setActiveObject(obj); canvas.renderAll(); updateEditButton(); }
+        function addText() { const t = new fabric.Textbox('New Text', { left: 100, top: 100, width: 200, fontSize: 25, fontFamily: 'Arial' }); finishObject(t); }
+        function deleteObject() { const o = canvas.getActiveObject(); if(o) canvas.remove(o); }
+
+        // --- BACKGROUNDS ---
+        function setGridBg() { canvas.setBackgroundColor(new fabric.Pattern({ source: 'data:image/svg+xml;base64,' + btoa('<svg width="40" height="40" xmlns="http://www.w3.org/2000/svg"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#ccc" stroke-width="1"/></svg>'), repeat: 'repeat' }), canvas.renderAll.bind(canvas)); }
+        function setRuledBg() { canvas.setBackgroundColor(new fabric.Pattern({ source: 'data:image/svg+xml;base64,' + btoa('<svg width="40" height="30" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="29" x2="40" y2="29" stroke="#94a3b8" stroke-width="1"/></svg>'), repeat: 'repeat' }), canvas.renderAll.bind(canvas)); }
+        function setBlackboardBg() { canvas.setBackgroundColor('#2d3e50', canvas.renderAll.bind(canvas)); }
+        function setVintageBg() { canvas.setBackgroundColor('#fdf5e6', canvas.renderAll.bind(canvas)); }
+        function setSolidBg(c) { canvas.setBackgroundColor(c, canvas.renderAll.bind(canvas)); }
+        function setBgImage(i) { const f=i.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ fabric.Image.fromURL(e.target.result, img=>{ img.scaleToWidth(BASE_WIDTH); canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas)); })}; r.readAsDataURL(f); }
+
+        // --- UI HELPERS ---
+        function updateEditButton() {
+            const btn = document.getElementById('btnEditItem'); const obj = canvas.getActiveObject();
+            btn.disabled = !obj || (!obj.customType && !obj.animationType);
+            btn.style.opacity = btn.disabled ? '0.5' : '1';
+        }
+        canvas.on('selection:created', updateEditButton); canvas.on('selection:cleared', updateEditButton);
+
+        function openConfig(type, existing = null) {
+            currentConfigType = type; activeEditGroup = existing; document.getElementById('configModal').style.display = 'flex';
+            const body = document.getElementById('modalBody'); body.innerHTML = '';
+            if (type === 'mcq') body.innerHTML = `<textarea id="inpQ" placeholder="Question">Question?</textarea><input id="inpA" value="A"><input id="inpB" value="B">`;
+            if (type === 'table') body.innerHTML = `<input type="number" id="inpRows" value="3"><input type="number" id="inpCols" value="3">`;
+            if (type === 'math') body.innerHTML = `<textarea id="inpMath">x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}</textarea>`;
+        }
+        function closeModal() { document.getElementById('configModal').style.display = 'none'; }
+        async function saveConfig() {
+            if (currentConfigType === 'mcq') await drawMCQ({ q: document.getElementById('inpQ').value, o: [document.getElementById('inpA').value, document.getElementById('inpB').value, 'Option C', 'Option D'] });
+            if (currentConfigType === 'table') await drawTable({ rows: document.getElementById('inpRows').value, cols: document.getElementById('inpCols').value, cells: [] });
+            if (currentConfigType === 'math') await drawMath(document.getElementById('inpMath').value);
+            closeModal();
+        }
+
+        // --- PRESENTATION & RECORDING ---
+        function startPresentation() {
+            slides[currentSlideIndex] = JSON.stringify(canvas.toJSON(['animationType', 'customType', 'customData']));
+            isPresentationMode = true;
+            document.body.classList.add('presentation-mode');
+            document.getElementById('presentationBar').style.display = 'flex';
+            resizeCanvas();
+            runAnimations();
+        }
+
+        function endPresentation() {
+            isPresentationMode = false;
+            document.body.classList.remove('presentation-mode');
+            document.getElementById('presentationBar').style.display = 'none';
+            canvas.isDrawingMode = false;
+            resizeCanvas();
+        }
+
+        async function toggleRecording() {
+            if (!isRecording) {
+                const stream = document.querySelector('canvas').captureStream(30);
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+                recordedChunks = [];
+                mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url; a.download = 'recording.webm'; a.click();
+                };
+                mediaRecorder.start();
+                isRecording = true;
+                document.getElementById('btnRec').classList.add('recording');
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                document.getElementById('btnRec').classList.remove('recording');
+            }
+        }
+
+        function togglePresentationBar() { const b=document.getElementById('presentationBar'); b.style.display = b.style.display === 'none' ? 'flex' : 'none'; }
+        function setPenMode(m){ canvas.isDrawingMode=true; canvas.freeDrawingBrush.color=document.getElementById('presentPenColor').value; }
+        function setEraserMode(){ isEraserActive=true; canvas.isDrawingMode=false; }
+        canvas.on('mouse:down', e => { if(isEraserActive && e.target && e.target.isInk) canvas.remove(e.target); });
+        function undoInk(){ const objs = canvas.getObjects().filter(o => o.isInk); if(objs.length) canvas.remove(objs[objs.length-1]); }
+
+        // --- SLIDE NAVIGATION ---
+        function loadSlide(i) {
+            canvas.clear();
+            if (slides[i]) {
+                canvas.loadFromJSON(slides[i], () => {
+                    canvas.renderAll();
+                    if (isPresentationMode) runAnimations();
+                });
+            }
+            document.getElementById('slideCounter').innerText = `${i+1} / ${slides.length || 1}`;
+        }
+
+        function addNewSlide() {
+            slides[currentSlideIndex] = JSON.stringify(canvas.toJSON(['animationType', 'customType', 'customData']));
+            slides.push(JSON.stringify({}));
+            currentSlideIndex = slides.length - 1;
+            loadSlide(currentSlideIndex);
+        }
+
+        function nextSlide() {
+            if (currentSlideIndex < slides.length - 1) {
+                slides[currentSlideIndex] = JSON.stringify(canvas.toJSON(['animationType', 'customType', 'customData']));
+                currentSlideIndex++;
+                loadSlide(currentSlideIndex);
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlideIndex > 0) {
+                slides[currentSlideIndex] = JSON.stringify(canvas.toJSON(['animationType', 'customType', 'customData']));
+                currentSlideIndex--;
+                loadSlide(currentSlideIndex);
+            }
+        }
+
+        function saveProject(){ slides[currentSlideIndex]=JSON.stringify(canvas.toJSON(['animationType', 'customType', 'customData'])); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(slides)],{type:'application/json'})); a.download='project.json'; a.click(); }
+        function loadProject(i){ const r=new FileReader(); r.onload=e=>{ slides=JSON.parse(e.target.result); currentSlideIndex=0; loadSlide(0); }; r.readAsText(i.files[0]); }
+
+        function resizeCanvas() {
+            const area = document.getElementById('canvasArea');
+            const scale = Math.min(area.clientWidth / BASE_WIDTH, area.clientHeight / BASE_HEIGHT);
+            canvas.setDimensions({ width: BASE_WIDTH * scale, height: BASE_HEIGHT * scale });
+            canvas.setZoom(scale);
+        }
+
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); setTimeout(resizeCanvas, 400); }
+        window.addEventListener('resize', resizeCanvas);
+        slides[0] = JSON.stringify(canvas.toJSON());
+        resizeCanvas();
+    </script>
+</body>
+</html>
