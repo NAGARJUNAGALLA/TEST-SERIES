@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz System</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; padding: 20px; }
+        .quiz-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        .step { display: none; }
+        .active { display: block; }
+        h2 { color: #333; text-align: center; }
+        .question-box { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 10px; }
+        .option-label { display: block; padding: 10px; margin: 5px 0; background: #fff; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; }
+        input[type="text"], input[type="tel"] { width: 100%; padding: 12px; margin: 10px 0 20px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; background: #007bff; color: white; padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .correct-ans { background-color: #d4edda !important; border-color: #28a745 !important; font-weight: bold; }
+        .wrong-ans { background-color: #f8d7da !important; border-color: #dc3545 !important; }
+    </style>
+</head>
+<body>
+
+<div class="quiz-card">
+    <!-- STEP 1: QUIZ -->
+    <div id="step1" class="step active">
+        <h2>Maths Test 1</h2>
+        <div class="question-box" id="box-q1">
+            <p><strong>1. ఒక వస్తువును ₹1500 లకు కొని ₹1450 లకు అమ్మిన వచ్చిన నష్ట శాతం</strong></p>
+            <label class="option-label" id="l-q1-0"><input type="radio" name="q1" value="1"> Cascading</label>
+            <label class="option-label" id="l-q1-1"><input type="radio" name="q1" value="0"> Color</label>
+            <label class="option-label" id="l-q1-2"><input type="radio" name="q1" value="0"> Creative</label>
+            <label class="option-label" id="l-q1-3"><input type="radio" name="q1" value="0"> Collective</label>
+            </div>
+
+        <div class="question-box" id="box-q2">
+            <p><strong>2. Which is a JavaScript framework?</strong></p>
+            <label class="option-label" id="l-q2-0"><input type="radio" name="q2" value="0"> React</label>
+            <label class="option-label" id="l-q2-1"><input type="radio" name="q2" value="0"> HTML</label>
+            <label class="option-label" id="l-q2-2"><input type="radio" name="q2" value="0"> CSS</label>
+            <label class="option-label" id="l-q2-3"><input type="radio" name="q2" value="1"> Creative</label>
+
+        </div>
+        <button onclick="checkStep1()">Next: Student Details</button>
+    </div>
+
+    <!-- STEP 2: DETAILS -->
+    <div id="step2" class="step">
+        <h2>Final Step</h2>
+        <label>Full Name</label>
+        <input type="text" id="userName" placeholder="Your Name">
+        <label>Mobile Number</label>
+        <input type="tel" id="userMobile" placeholder="Your Mobile">
+        <button onclick="submitAll()">Submit & View Results</button>
+    </div>
+
+    <!-- STEP 3: SCORE & REVIEW -->
+    <div id="step3" class="step" style="text-align: center;">
+        <h2 style="color: #28a745;">Quiz Submitted!</h2>
+        <p id="finalDisplayName"></p>
+        <div style="font-size: 40px; margin: 20px 0;" id="resScore"></div>
+        
+        <div id="reviewArea" style="display: none; text-align: left; margin-top: 20px;">
+            <hr><h3>Review Answers:</h3>
+        </div>
+
+        <button id="btnReview" onclick="startReview()" style="background: #17a2b8;">Review My Answers</button>
+    </div>
+</div>
+
+<!-- HIDDEN GOOGLE FORM -->
+<form id="googleForm" action="https://docs.google.com/forms/d/e/1FAIpQLSdq20JH83oGM56v72lxX4yqBxywqZoNJG5naqkgB0Ec91zs_Q/formResponse" method="POST" target="hidden_iframe" style="display:none;">
+    <input type="hidden" name="entry.1302258916" id="gName">
+    <input type="hidden" name="entry.1505815971" id="gMobile">
+    <input type="hidden" name="entry.203406988" id="gScore">
+</form>
+<iframe name="hidden_iframe" style="display:none;"></iframe>
+
+<script>
+    const quizTitle = "Maths Test 1"; // Quiz Name defined here
+    let finalScore = 0;
+
+    function checkStep1() {
+        if (!document.querySelector('input[name="q1"]:checked') || !document.querySelector('input[name="q2"]:checked')) {
+            alert("Please answer all questions."); return;
+        }
+        document.getElementById('step1').classList.remove('active');
+        document.getElementById('step2').classList.add('active');
+    }
+
+    function submitAll() {
+        const studentName = document.getElementById('userName').value;
+        const mobile = document.getElementById('userMobile').value;
+        
+        if (!studentName || !mobile) { alert("Fill in details!"); return; }
+
+        // Combine Quiz Name + Student Name
+        const fullNameForSheet = quizTitle + " - " + studentName;
+
+        // Calculate Score
+        finalScore = 0;
+        if (document.querySelector('input[name="q1"]:checked').value === "1") finalScore++;
+        if (document.querySelector('input[name="q2"]:checked').value === "1") finalScore++;
+
+        // Fill Google Form
+        document.getElementById('gName').value = fullNameForSheet;
+        document.getElementById('gMobile').value = mobile;
+        document.getElementById('gScore').value = finalScore + " / 2";
+        document.getElementById('googleForm').submit();
+
+        // Update UI
+        document.getElementById('finalDisplayName').innerText = fullNameForSheet;
+        document.getElementById('resScore').innerText = "Score: " + finalScore + " / 2";
+        
+        document.getElementById('step2').classList.remove('active');
+        document.getElementById('step3').classList.add('active');
+    }
+
+    function startReview() {
+        document.querySelectorAll('input[type="radio"]').forEach(el => el.disabled = true);
+        highlight('q1', "1");
+        highlight('q2', "1");
+        
+        const area = document.getElementById('reviewArea');
+        area.appendChild(document.getElementById('box-q1'));
+        area.appendChild(document.getElementById('box-q2'));
+        area.style.display = 'block';
+        document.getElementById('btnReview').style.display = 'none';
+    }
+
+    function highlight(qName, correctVal) {
+        const selected = document.querySelector(`input[name="${qName}"]:checked`);
+        const radios = document.querySelectorAll(`input[name="${qName}"]`);
+        
+        radios.forEach((r, i) => {
+            const label = document.getElementById(`l-${qName}-${i}`);
+            if (r.value === correctVal) {
+                label.classList.add('correct-ans');
+                label.innerHTML += " ✓ (Correct)";
+            } else if (r.checked) {
+                label.classList.add('wrong-ans');
+                label.innerHTML += " ✗ (Your Choice)";
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
